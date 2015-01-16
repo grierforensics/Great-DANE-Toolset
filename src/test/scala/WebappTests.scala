@@ -8,7 +8,7 @@ import scala.io.Source.fromInputStream
 
 class WebappTests extends FunSuite with BeforeAndAfterAll {
 
-  val testServer = new TestServer("src/main/webapp", 8080, "/")
+  val testServer = new TestServer("src/main/webapp", 63636, "/")
 
   override def afterAll() {
     testServer.stop()
@@ -21,9 +21,15 @@ class WebappTests extends FunSuite with BeforeAndAfterAll {
   }
 
   test("GET /") {
+    val res = get("http://localhost:8080/")
+    //res.lines.take(5) foreach println
+    assert(res.startsWith("<!DOCTYPE html>"))
+  }
+
+  test("GET /test/echo") {
     val res = get("http://localhost:8080/test/blah")
-    println(res)
-    assert(res.nonEmpty)
+    //println(res)
+    assert(res.contains("\"echo\":\"blah\""))
   }
 
 }

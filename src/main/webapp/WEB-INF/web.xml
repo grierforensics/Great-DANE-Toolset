@@ -22,7 +22,7 @@
       <param-value>true</param-value>
     </init-param>
     <init-param>
-      <param-name>com.sun.jersey.config.property.WebPageContentRegex</param-name>
+      <param-name>jersey.config.servlet.filter.staticContentRegex</param-name>
       <param-value>
         (/|.*\.(jsp|html|js|json|ico|css|less|png|jpg|jpeg|gif|md|svg|scss)|/(css|font-awesome|images|js|mock|partials)/.*)
       </param-value>

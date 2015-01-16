@@ -31,3 +31,5 @@ libraryDependencies ++= Seq( // test
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "test",
   "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 )
+
+webInfClasses in webapp := true

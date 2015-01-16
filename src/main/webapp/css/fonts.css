@@ -1,0 +1,111 @@
+/* ================================================================ *\
+    #Fonts
+\* ================================================================ */
+@font-face {
+    font-family: 'Helvetica Neue';
+    src: url('fonts/helveticaneue-mediumitalic-webfont.woff') format('woff'),
+         url('fonts/helveticaneue-mediumitalic-webfont.ttf') format('truetype'),
+         url('fonts/helveticaneue-mediumitalic-webfont.svg#helvetica_neueregular') format('svg');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Helvetica Neue LT Pro LtEx';
+    src: url('fonts/helveticaneueltproltex-webfont.woff') format('woff'),
+         url('fonts/helveticaneueltproltex-webfont.ttf') format('truetype'),
+         url('fonts/helveticaneueltproltex-webfont.svg#helvetica_neue_lt_pro43LtEx') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Helvetica Neue LT Pro Lt';
+    src: url('fonts/helveticaneueltprolt-webfont.woff') format('woff'),
+         url('fonts/helveticaneueltprolt-webfont.ttf') format('truetype'),
+         url('fonts/helveticaneueltprolt-webfont.svg#helvetica_neue_lt_pro45_light') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'Helvetica Neue';
+    src: url('fonts/helveticaneuelight-webfont.woff') format('woff'),
+         url('fonts/helveticaneuelight-webfont.ttf') format('truetype'),
+         url('fonts/helveticaneuelight-webfont.svg#helvetica_neuelight') format('svg');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DIN';
+    src: url('fonts/din-regular-webfont.woff') format('woff'),
+         url('fonts/din-regular-webfont.ttf') format('truetype'),
+         url('fonts/din-regular-webfont.svg#dinregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DIN';
+    src: url('fonts/din-medium-webfont.woff') format('woff'),
+         url('fonts/din-medium-webfont.ttf') format('truetype'),
+         url('fonts/din-medium-webfont.svg#dinmedium') format('svg');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DIN';
+    src: url('fonts/din-light-webfont.woff') format('woff'),
+         url('fonts/din-light-webfont.ttf') format('truetype'),
+         url('fonts/din-light-webfont.svg#din_lightregular') format('svg');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DIN';
+    src: url('fonts/din-bold-webfont.woff') format('woff'),
+         url('fonts/din-bold-webfont.ttf') format('truetype'),
+         url('fonts/din-bold-webfont.svg#dinbold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Helvetica Oblique';
+    src: url('fonts/helvetica-boldoblique-webfont.woff') format('woff'),
+         url('fonts/helvetica-boldoblique-webfont.ttf') format('truetype'),
+         url('fonts/helvetica-boldoblique-webfont.svg#helveticabold_oblique') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Myriad Pro';
+    src: url('fonts/myriadprobold-webfont.woff') format('woff'),
+         url('fonts/myriadprobold-webfont.ttf') format('truetype'),
+         url('fonts/myriadprobold-webfont.svg#myriad_probold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Myriad Pro';
+    src: url('fonts/myriadproregular-webfont.woff') format('woff'),
+         url('fonts/myriadproregular-webfont.ttf') format('truetype'),
+         url('fonts/myriadproregular-webfont.svg#myriad_proregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Calibri';
+    src: url('fonts/calibrillight-webfont.woff') format('woff'),
+         url('fonts/calibrillight-webfont.ttf') format('truetype'),
+         url('fonts/calibrillight-webfont.svg#calibrilight') format('svg');
+    font-weight: 300;
+    font-style: normal;
+}
