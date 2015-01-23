@@ -211,7 +211,7 @@ public class DaneSmimeTool {
             if (toolkit.isSigned(mm)) {
                 SMIMESigned smimeSigned = new SMIMESigned(mm);
 
-                SignerInformation signerInformation = (SignerInformation) smimeSigned.getSignerInfos().getSigners().iterator().next();
+                SignerInformation signerInformation = smimeSigned.getSignerInfos().getSigners().iterator().next();
 
                  /* Similar to:
                   $ openssl smime -pk7out -in message-signed.txt | openssl pkcs7 -text -noout -print_certs
@@ -230,7 +230,6 @@ public class DaneSmimeTool {
                 } else {
                     // We'd need to load the CA chain here and verify the CertPath. If it checks out we can set true
                     boolean certPathValid = validateCertPath(certHolder);
-                    ;
 
                     return new MessageDetails(isSignatureValid, false, certPathValid);
                 }
@@ -240,7 +239,7 @@ public class DaneSmimeTool {
             if (toolkit.isSigned(bodyPart)) {
                 SMIMESigned smimeSigned = new SMIMESigned(bodyPart);
 
-                SignerInformation signerInformation = (SignerInformation) smimeSigned.getSignerInfos().getSigners().iterator().next();
+                SignerInformation signerInformation = smimeSigned.getSignerInfos().getSigners().iterator().next();
 
                  /* Similar to:
                   $ openssl smime -pk7out -in message-signed.txt | openssl pkcs7 -text -noout -print_certs
@@ -270,7 +269,7 @@ public class DaneSmimeTool {
 
     // Example of CertificatePath validation around a CA's certificate chain.
     private static boolean validateCertPath(X509CertificateHolder certHolder)
-            throws CertificateException, GeneralSecurityException {
+            throws GeneralSecurityException {
         JcaX509CertificateConverter converter = new JcaX509CertificateConverter().setProvider("BC");
 
         X509Certificate rootCert = null; // TODO: set the trust anchor for the chain.
