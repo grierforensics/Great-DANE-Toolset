@@ -1,0 +1,87 @@
+<section class="section section-testing">
+    <h3 class="section-title">Testing for DANE SMIMEA Support</h3><!-- /.testing-title -->
+
+    <ul class="section-boxes">
+        <li ng-repeat="update in updates" class="section-box">
+            <div ng-switch on="update.type">
+                <div ng-switch-when="sendingAuth">
+                    <div class="section-box-icon section-box-icon-yellow">
+                        <i class="ico ico-process"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <h2 class="section-box-title">Sending authorization email...</h2>
+
+                        <p><span>{{update.email}}</span></p>
+                    </div>
+                </div>
+
+                <div ng-switch-when="receivedAuthResponse">
+                    <div class="section-box-icon section-box-icon-green">
+                        <i class="ico ico-tick"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <p><span>{{update.email}}</span> has accepted the request to recieve encrypted email.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-when="validCert">
+                    <div class="section-box-icon section-box-icon-green">
+                        <i class="ico ico-tick"></i>
+                    </div>
+                    <!-- /.section-box-icon section-box-icon-green -->
+
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <p>
+                                <span>{{update.email}}</span> has a valid SMIMEA certificate published via DNS
+                            </p>
+                        </div>
+                        <!-- /.section-box-entry -->
+
+                        <div class="section-box-certificate">
+                            <p><strong>Congratulations!</strong> The following certificate data was retrieved:</p>
+                            <code>{{update.certDetails}}</code>
+                        </div>
+                        <!-- /.section-box-certificate -->
+
+                        <div class="section-box-actions">
+                            <a href="#" class="link-hide">+ Hide Certificate</a>
+                        </div>
+                        <!-- /.section-box-actions -->
+                    </div>
+                    <!-- /.section-box-content -->
+                </div>
+
+                <div ng-switch-when="encryptedEmailSent">
+                    <div class="section-box-icon section-box-icon-green">
+                        <i class="ico ico-tick"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <p>Encrypted email sent to <span>{{update.email}}</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-when="waiting">
+                    <div class="section-box-icon section-box-icon-yellow">
+                        <i class="ico ico-process"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <p>Waiting for response...</p>
+                            <p><a href="#">(if you have an issue +)</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+        <!-- /.section-box -->
+    </ul>
+    <!-- /.section-boxes -->
+
+    <div class="section-notice">Awaiting Feedback...</div>
+    <!-- /.section-notice -->
+</section><!-- /.section section-testing -->
