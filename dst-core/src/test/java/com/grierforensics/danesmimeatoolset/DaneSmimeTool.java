@@ -42,8 +42,10 @@ import java.util.*;
 
 /**
  * This is sample workflow code that doesn't currently work when run, because the sample email addresses don't have DNS setup (i think)
+ * This was copied from Jonathan Grier and refactored to it's current state.
  */
 public class DaneSmimeTool {
+
     public static void main(String[] args)
             throws Exception {
         Security.addProvider(new BouncyCastleProvider());
@@ -127,8 +129,8 @@ public class DaneSmimeTool {
     private static void sendEncryptedEmail(String fromFullName, String fromEmailAddress, String toEmailAddress) throws Exception {
         DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider("BC").build();
         SMIMEToolkit toolkit = new SMIMEToolkit(digestCalculatorProvider);
-        X509Certificate toUserCert = getCertForEmailAddress(digestCalculatorProvider, toEmailAddress);
         JcaPKIXIdentity myIdentity = loadIdentity(fromFullName, fromEmailAddress);
+        X509Certificate toUserCert = getCertForEmailAddress(digestCalculatorProvider, toEmailAddress);
 
 
         Properties props = System.getProperties();
