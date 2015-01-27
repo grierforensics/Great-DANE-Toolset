@@ -3,7 +3,7 @@ package com.grierforensics.danesmimeatoolset
 import java.io.File
 import java.math.BigInteger
 import java.security.cert.X509Certificate
-import java.security.{KeyPair, KeyPairGenerator, SecureRandom}
+import java.security.{KeyPair, KeyPairGenerator, SecureRandom, Security}
 import java.util.Date
 import javax.mail.internet.{MimeBodyPart, MimeMultipart}
 
@@ -11,12 +11,13 @@ import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x500.{X500Name, X500NameBuilder}
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier
-import org.bouncycastle.cert.dane.DANECertificateFetcher
 import org.bouncycastle.cert.dane.fetcher.JndiDANEFetcherFactory
+import org.bouncycastle.cert.dane.{DANECertificateFetcher, DANEException}
 import org.bouncycastle.cert.jcajce.{JcaX509CertificateConverter, JcaX509v1CertificateBuilder}
 import org.bouncycastle.cert.{X509CertificateHolder, X509v1CertificateBuilder}
 import org.bouncycastle.cms.SignerInfoGenerator
 import org.bouncycastle.cms.jcajce.{JcaSimpleSignerInfoGeneratorBuilder, JceCMSContentEncryptorBuilder, JceKeyTransRecipientInfoGenerator}
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.mail.smime.SMIMEToolkit
 import org.bouncycastle.openssl.jcajce.JcaPKIXIdentityBuilder
 import org.bouncycastle.operator.jcajce.{JcaContentSignerBuilder, JcaDigestCalculatorProviderBuilder}
@@ -25,6 +26,7 @@ import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 
 
 class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
+  //todo: put this default in config
 
   val providerName: String = "BC"
 
@@ -36,6 +38,10 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
     encrypt(sign(email, fromIdentity))
   }
 
+
+  def sign(email: Email): Email = sign(email, generateIdentity(email.fromFullName.getOrElse(email.fromEmailAddress), email.fromEmailAddress))
+
+
   def sign(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
 
     val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(providerName).build("SHA1withRSA", fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
@@ -46,9 +52,14 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
       email.subject, signedMultipart)
   }
 
-  def encrypt(email: Email): Email = {
-    val toUserCert: X509Certificate = fetchCertForEmailAddress(digestCalculatorProvider, email.toEmailAddress)
 
+  def fetchCert(emailAddres: String) = fetchCertForEmailAddress(digestCalculatorProvider, emailAddres)
+
+
+  def encrypt(email: Email): Email = encrypt(email, fetchCert(email.toEmailAddress).get)
+
+
+  def encrypt(email: Email, toUserCert: X509Certificate): Email = {
     val encryptor: OutputEncryptor = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes128_CBC).setProvider(providerName).build
     val infoGenerator: JceKeyTransRecipientInfoGenerator = new JceKeyTransRecipientInfoGenerator(toUserCert).setProvider(providerName)
 
@@ -59,14 +70,22 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
       email.subject, encrypted)
   }
 
-  private def fetchCertForEmailAddress(digestCalculatorProvider: DigestCalculatorProvider, toEmailAddress: String): X509Certificate = {
+
+  private def fetchCertForEmailAddress(digestCalculatorProvider: DigestCalculatorProvider, toEmailAddress: String): Option[X509Certificate] = {
     val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
     val fetcher: JndiDANEFetcherFactory = new JndiDANEFetcherFactory().usingDNSServer(dnsServer)
     val certFetcher: DANECertificateFetcher = new DANECertificateFetcher(fetcher, sha224Calculator)
-    val userCertHolder: X509CertificateHolder = certFetcher.fetch(toEmailAddress).get(0).asInstanceOf[X509CertificateHolder]
-    val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
-    return certConverter.getCertificate(userCertHolder)
+    try {
+      val userCertHolder: X509CertificateHolder = certFetcher.fetch(toEmailAddress).get(0).asInstanceOf[X509CertificateHolder]
+      val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
+
+      Option(certConverter.getCertificate(userCertHolder))
+    }
+    catch {
+      case e: DANEException if e.getMessage.contains("DNS name not found") => None
+    }
   }
+
 
   def loadIdentity(keyFileName: String, certFileName: String): JcaPKIXIdentity = {
     val keyFile: File = new File(keyFileName)
@@ -77,6 +96,7 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
 
     new JcaPKIXIdentityBuilder().setProvider(providerName).build(keyFile, certFile)
   }
+
 
   def generateIdentity(fullName: String, emailAddress: String): JcaPKIXIdentity = {
     //The openssl commands used are:
@@ -117,6 +137,9 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
 
     new JcaPKIXIdentity(rsaPair.getPrivate, Array[X509Certificate](rsaCert))
   }
+}
 
 
+object DaneSmimeService extends DaneSmimeService("8.8.8.8") {
+  Security.addProvider(new BouncyCastleProvider)
 }

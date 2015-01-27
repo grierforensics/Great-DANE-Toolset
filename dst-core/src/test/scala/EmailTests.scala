@@ -7,8 +7,7 @@ import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.scalatest._
 
 class EmailTests extends FunSuite with BeforeAndAfterAll {
-  Security.addProvider(new BouncyCastleProvider)
-  val daneSmimeService: DaneSmimeService = new DaneSmimeService()
+  val daneSmimeService = DaneSmimeService
 
   val email = Email(Some("Alice"), "test1.dst@example.com", Some("Bob"), "test2.dst@example.com", "secret subject", "secret message")
   val fromIdentity: JcaPKIXIdentity = daneSmimeService.generateIdentity(email.fromFullName.getOrElse(email.fromEmailAddress), email.fromEmailAddress)

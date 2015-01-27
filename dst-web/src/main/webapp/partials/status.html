@@ -54,7 +54,7 @@
                     <!-- /.section-box-content -->
                 </div>
 
-                <div ng-switch-when="encryptedEmailSent">
+                <div ng-switch-when="emailSent">
                     <div class="section-box-icon section-box-icon-green">
                         <i class="ico ico-tick"></i>
                     </div>
@@ -73,6 +73,17 @@
                         <div class="section-box-entry">
                             <p>Waiting for response...</p>
                             <p><a href="#">(if you have an issue +)</a></p>
+                        </div>
+                    </div>
+                </div
+
+               <div ng-switch-default>
+                    <div class="section-box-icon section-box-icon-yellow">
+                        <i class="ico ico-process"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <p>{{update}}</p>
                         </div>
                     </div>
                 </div>

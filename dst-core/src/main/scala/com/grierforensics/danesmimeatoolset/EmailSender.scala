@@ -43,3 +43,6 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     }
   }
 }
+
+object EmailSender extends EmailSender("smtp.gmail.com", "test1.dst@example.com", "test1.dst!", true)
+//todo: move this static config to config

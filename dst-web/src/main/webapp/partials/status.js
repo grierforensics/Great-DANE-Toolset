@@ -35,7 +35,7 @@ app.controller('StatusCtrl', function ($scope) {
 
     setTimeout(function(){
         $scope.updates.push({
-                'type': 'encryptedEmailSent',
+                'type': 'emailSent',
                 'email': 'user@example.com',
                 'date':new Date()
             });
