@@ -1,8 +1,5 @@
 package com.grierforensics.danesmimeatoolset
 
-import java.security.Security
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.scalatest._
 
