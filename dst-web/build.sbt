@@ -11,19 +11,11 @@ jetty()
 
 resolvers += Resolver.sonatypeRepo("releases")
 
-val jacksonVersion = "2.4.4"
-val jerseyVersion = "2.14"
-
 libraryDependencies ++= Seq(
   "com.grierforensics" %% "dst-core" % "0.1.0-SNAPSHOT",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % jacksonVersion,
-  "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-base" % jacksonVersion,
-  "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % jacksonVersion,
-  "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % jerseyVersion,
-  "com.owlike" % "genson" % "1.2"
+  "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14",
+  "com.owlike" % "genson-scala" % "1.2"
 )
 
 libraryDependencies ++= Seq( // test

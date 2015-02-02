@@ -1,4 +1,4 @@
-package com.grierforensics.danesmimeatoolset
+package com.grierforensics.danesmimeatoolset.rest
 
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.webapp.WebAppContext

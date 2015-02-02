@@ -1,4 +1,4 @@
-package com.grierforensics.danesmimeatoolset
+package com.grierforensics.danesmimeatoolset.model
 
 import javax.mail.internet.{MimeBodyPart, MimeMultipart}
 

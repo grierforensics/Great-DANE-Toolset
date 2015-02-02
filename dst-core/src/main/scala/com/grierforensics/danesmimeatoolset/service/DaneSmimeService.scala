@@ -1,4 +1,4 @@
-package com.grierforensics.danesmimeatoolset
+package com.grierforensics.danesmimeatoolset.service
 
 import java.io.File
 import java.math.BigInteger
@@ -6,6 +6,9 @@ import java.security.cert.X509Certificate
 import java.security.{KeyPair, KeyPairGenerator, SecureRandom, Security}
 import java.util.Date
 import javax.mail.internet.{MimeBodyPart, MimeMultipart}
+
+import com.grierforensics.danesmimeatoolset.model.Email
+import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -25,8 +28,7 @@ import org.bouncycastle.operator.{ContentSigner, DigestCalculator, DigestCalcula
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 
 
-class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
-  //todo: put this default in config
+class DaneSmimeService(val dnsServer: String) {
 
   val providerName: String = "BC"
 
@@ -140,6 +142,6 @@ class DaneSmimeService(val dnsServer: String = "8.8.8.8") {
 }
 
 
-object DaneSmimeService extends DaneSmimeService("8.8.8.8") {
+object DaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeService.dns")) {
   Security.addProvider(new BouncyCastleProvider)
 }

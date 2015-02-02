@@ -1,4 +1,4 @@
-package com.grierforensics.danesmimeatoolset
+package com.grierforensics.danesmimeatoolset.rest
 
 import java.net._
 import java.nio.file.{Files, Paths}
@@ -29,8 +29,8 @@ class WebappTests extends FunSuite with BeforeAndAfterAll {
     assert(res.startsWith("<!DOCTYPE html>"))
   }
 
-  test("GET /test/echo") {
-    val res = get("http://localhost:63636/test/blah")
+  test("GET /workflow/echo/blah") {
+    val res = get("http://localhost:63636/workflow/echo/blah")
     //println(res)
     assert(res.contains("\"echo\":\"blah\""))
   }

@@ -6,17 +6,18 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.model.Workflow._
-import com.grierforensics.danesmimeatoolset.{DaneSmimeService, Email, EmailSender}
+import com.grierforensics.danesmimeatoolset.service.{DaneSmimeService, EmailSender}
 
+import scala.beans.BeanProperty
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 ///////////////////////////// Workflow
 
-class Workflow private(val id: String,
-                       val emailAddress: String,
+class Workflow private(@BeanProperty val id: String,
+                       @BeanProperty val emailAddress: String,
                        var cert: Option[X509Certificate] = None,
-                       var events: ListBuffer[Event] = ListBuffer()) {
+                       @BeanProperty var events: ListBuffer[Event] = ListBuffer()) {
 
   def sendEmail() = {
     val email = Email(Some(dstFromName), dstFromAddress, None, emailAddress,
@@ -114,8 +115,8 @@ abstract class Event {
   def date: Date
 }
 
-class BasicEvent(val eventType: EventType,
-                 val message: String,
-                 val date: Date = new Date) extends Event
+class BasicEvent(@BeanProperty val eventType: EventType,
+                 @BeanProperty val message: String,
+                 @BeanProperty val date: Date = new Date) extends Event
 
 

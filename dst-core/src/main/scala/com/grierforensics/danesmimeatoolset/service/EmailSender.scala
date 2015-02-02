@@ -1,8 +1,11 @@
-package com.grierforensics.danesmimeatoolset
+package com.grierforensics.danesmimeatoolset.service
 
 import java.util.Properties
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
+
+import com.grierforensics.danesmimeatoolset.model.Email
+import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 
 
 class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) {
@@ -44,5 +47,8 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
   }
 }
 
-object EmailSender extends EmailSender("smtp.gmail.com", "test1.dst@example.com", "test1.dst!", true)
-//todo: move this static config to config
+object EmailSender extends EmailSender(
+  config.getString("EmailSender.host"),
+  config.getString("EmailSender.username"),
+  config.getString("EmailSender.password"),
+  true)

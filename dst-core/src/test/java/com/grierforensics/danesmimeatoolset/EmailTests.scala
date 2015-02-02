@@ -1,5 +1,7 @@
 package com.grierforensics.danesmimeatoolset
 
+import com.grierforensics.danesmimeatoolset.model.Email
+import com.grierforensics.danesmimeatoolset.service.{EmailSender, DaneSmimeService}
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.scalatest._
 
