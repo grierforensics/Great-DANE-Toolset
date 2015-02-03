@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.model.Workflow._
 import com.grierforensics.danesmimeatoolset.service.{DaneSmimeService, EmailSender}
+import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
 
 import scala.beans.BeanProperty
 import scala.collection.mutable.ListBuffer
@@ -20,9 +21,7 @@ class Workflow private(@BeanProperty val id: String,
                        @BeanProperty var events: ListBuffer[Event] = ListBuffer()) {
 
   def sendEmail() = {
-    val email = Email(Some(dstFromName), dstFromAddress, None, emailAddress,
-      "Dane Smime Test (" + id + ")",
-      "secret message with links for workflow id " + id)
+    val email = createEmail
 
     val signedEmail: Email = daneSmimeService.sign(email) //sign with generated identity
 
@@ -39,6 +38,14 @@ class Workflow private(@BeanProperty val id: String,
     }
 
     events += new BasicEvent(EventType.waiting, "Waiting for response...")
+  }
+
+  def createEmail: Email = {
+    val fromName: String = config.getString("Workflow.fromName")
+    val fromAddress: String = config.getString("Workflow.from")
+    Email(Some(fromName), fromAddress, None, emailAddress,
+      "DANE SMIMEA Toolset Mail (" + id + ")",
+      "secret message with links for workflow id " + id)
   }
 
   def updateCert(): Option[X509Certificate] = {
@@ -70,11 +77,6 @@ object Workflow {
 
   val sender = EmailSender
 
-  val dstFromAddress: String = "test1.dst@example.com"
-
-  val dstFromName: String = "Alice"
-
-
   def apply(email: String) = {
     new Workflow(nextId, email)
   }
@@ -87,7 +89,7 @@ object Workflow {
   def nextId: String = {
     synchronized {
       lastId = Math.max(lastId + 1, System.currentTimeMillis())
-      lastId + "" + (Random.nextInt(9000000) + 1000000)
+       "%d%d3".format(lastId,Random.nextInt(1000))
     }
   }
 }

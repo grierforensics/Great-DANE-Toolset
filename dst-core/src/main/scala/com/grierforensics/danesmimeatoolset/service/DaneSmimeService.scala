@@ -9,13 +9,12 @@ import javax.mail.internet.{MimeBodyPart, MimeMultipart}
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
-
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x500.{X500Name, X500NameBuilder}
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier
 import org.bouncycastle.cert.dane.fetcher.JndiDANEFetcherFactory
-import org.bouncycastle.cert.dane.{DANECertificateFetcher, DANEException}
+import org.bouncycastle.cert.dane.{DANECertificateFetcher, DANEEntry, DANEEntryFactory, DANEException}
 import org.bouncycastle.cert.jcajce.{JcaX509CertificateConverter, JcaX509v1CertificateBuilder}
 import org.bouncycastle.cert.{X509CertificateHolder, X509v1CertificateBuilder}
 import org.bouncycastle.cms.SignerInfoGenerator
@@ -26,13 +25,15 @@ import org.bouncycastle.openssl.jcajce.JcaPKIXIdentityBuilder
 import org.bouncycastle.operator.jcajce.{JcaContentSignerBuilder, JcaDigestCalculatorProviderBuilder}
 import org.bouncycastle.operator.{ContentSigner, DigestCalculator, DigestCalculatorProvider, OutputEncryptor}
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
+import org.bouncycastle.util.encoders.Hex
 
 
 class DaneSmimeService(val dnsServer: String) {
-
+  val bouncyCastleProviderSetup = BouncyCastleProviderSetup
   val providerName: String = "BC"
-
   val digestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(providerName).build
+  val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
+
   val toolkit: SMIMEToolkit = new SMIMEToolkit(digestCalculatorProvider)
 
 
@@ -55,7 +56,13 @@ class DaneSmimeService(val dnsServer: String) {
   }
 
 
-  def fetchCert(emailAddres: String) = fetchCertForEmailAddress(digestCalculatorProvider, emailAddres)
+  def fetchCert(emailAddress: String) = fetchCertForEmailAddress(digestCalculatorProvider, emailAddress)
+
+
+  def getDANEEntryZoneLine(de: DANEEntry): String = {
+    val encoded: Array[Byte] = de.getCertificate.getEncoded
+    """%s 299 IN TYPE65500 \# %d %s""".format(de.getDomainName, encoded.length, Hex.toHexString(encoded))
+  }
 
 
   def encrypt(email: Email): Email = encrypt(email, fetchCert(email.toEmailAddress).get)
@@ -74,7 +81,6 @@ class DaneSmimeService(val dnsServer: String) {
 
 
   private def fetchCertForEmailAddress(digestCalculatorProvider: DigestCalculatorProvider, toEmailAddress: String): Option[X509Certificate] = {
-    val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
     val fetcher: JndiDANEFetcherFactory = new JndiDANEFetcherFactory().usingDNSServer(dnsServer)
     val certFetcher: DANECertificateFetcher = new DANECertificateFetcher(fetcher, sha224Calculator)
     try {
@@ -86,6 +92,19 @@ class DaneSmimeService(val dnsServer: String) {
     catch {
       case e: DANEException if e.getMessage.contains("DNS name not found") => None
     }
+  }
+
+
+  def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
+    createDANEEntry(email, cert.getEncoded)
+  }
+
+
+  def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
+    val daneEntryFactory = new DANEEntryFactory(sha224Calculator)
+    val holder: X509CertificateHolder = new X509CertificateHolder(certBytes)
+    val entry: DANEEntry = daneEntryFactory.createEntry(email, holder)
+    entry
   }
 
 
@@ -142,6 +161,8 @@ class DaneSmimeService(val dnsServer: String) {
 }
 
 
-object DaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeService.dns")) {
+object DaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeService.dns"))
+
+object BouncyCastleProviderSetup {
   Security.addProvider(new BouncyCastleProvider)
 }

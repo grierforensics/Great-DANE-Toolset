@@ -17,12 +17,12 @@ class WorkflowTests extends FunSuite with BeforeAndAfterAll {
   }
 
   test("json generation") {
-    val w1 = Workflow("bob.dst@example.com")
+    val w1 = Workflow("dst.bob@example.com")
     w1.updateCert()
+
     val genson = new GensonBuilder().create()
     val json1: String = genson.serialize(w1)
     println(json1)
-
 
   }
 }

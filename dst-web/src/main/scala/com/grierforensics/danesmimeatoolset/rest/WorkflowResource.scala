@@ -12,19 +12,19 @@ import scala.beans.BeanProperty
 @Consumes(Array(MediaType.APPLICATION_JSON))
 class WorkflowResource {
 
-//  @POST
-//  def createWorkflow(@QueryParam("email") email: String): Workflow = {
-//    val result: Workflow = Workflow(email)
-//    result.sendEmail()
-//    WorkflowDao.persist(result)
-//    result
-//  }
-//
-//  @GET
-//  @Path("{id}")
-//  def workflowStatus(@PathParam("id") id: String): Workflow = {
-//    WorkflowDao.fetch(id)
-//  }
+  //  @POST
+  //  def createWorkflow(@QueryParam("email") email: String): Workflow = {
+  //    val result: Workflow = Workflow(email)
+  //    result.sendEmail()
+  //    WorkflowDao.persist(result)
+  //    result
+  //  }
+  //
+  //  @GET
+  //  @Path("{id}")
+  //  def workflowStatus(@PathParam("id") id: String): Workflow = {
+  //    WorkflowDao.fetch(id)
+  //  }
   
   @GET
   @Path("echo/{echo}")
