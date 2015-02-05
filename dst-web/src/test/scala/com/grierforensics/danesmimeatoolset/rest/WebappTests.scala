@@ -1,13 +1,12 @@
 package com.grierforensics.danesmimeatoolset.rest
 
-import java.net._
 import java.nio.file.{Files, Paths}
 
-import org.scalatest._
+import com.grierforensics.danesmimeatoolset.model.Workflow
+import org.scalatest._;
 
-import scala.io.Source.fromInputStream
 
-class WebappTests extends FunSuite with BeforeAndAfterAll {
+class WebappTests extends FunSuite with BeforeAndAfterAll with RestClient {
 
   val projectRoot = if (Files.exists(Paths.get("dst-web"))) "dst-web/" else "./"
 
@@ -17,12 +16,6 @@ class WebappTests extends FunSuite with BeforeAndAfterAll {
     testServer.stop()
   }
 
-  def get(url: String): String = {
-    val conn = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
-    conn.setRequestMethod("GET")
-    fromInputStream(conn.getInputStream).getLines().mkString("\n")
-  }
-
   test("GET /") {
     val res = get("http://localhost:63636/")
     //res.lines.take(5) foreach println
@@ -30,9 +23,27 @@ class WebappTests extends FunSuite with BeforeAndAfterAll {
   }
 
   test("GET /workflow/echo/blah") {
-    val res = get("http://localhost:63636/workflow/echo/blah")
+    val r1 = get("http://localhost:63636/workflow/echo/blah1", classOf[Echo])
+    val r2 = get("http://localhost:63636/workflow/echo/blah2", classOf[Echo])
     //println(res)
-    assert(res.contains("\"echo\":\"blah\""))
+    assert(r1.echo == "blah1")
+    assert(r2.echo == "blah2")
+    assert(r2.count - r1.count == 1)
+  }
+
+  test("REST Workflow") {
+    val wfStr1 = post("http://localhost:63636/workflow", Map("email" -> "dst.bob@example.com"), classOf[String])
+    println(wfStr1)
+    val wf1: Workflow = App.genson.deserialize(wfStr1, classOf[Workflow])
+
+    val wfStr2 = get("http://localhost:63636/workflow/" + wf1.id, classOf[String])
+    println(wfStr2)
+    val wf2: Workflow = App.genson.deserialize(wfStr2, classOf[Workflow])
+
+    assert(wf1 == wf2)
+    println(wf1)
   }
 
 }
+
+

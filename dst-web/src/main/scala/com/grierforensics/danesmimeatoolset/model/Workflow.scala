@@ -15,10 +15,12 @@ import scala.util.Random
 
 ///////////////////////////// Workflow
 
-class Workflow private(@BeanProperty val id: String,
-                       @BeanProperty val emailAddress: String,
-                       var cert: Option[X509Certificate] = None,
-                       @BeanProperty var events: ListBuffer[Event] = ListBuffer()) {
+class Workflow(@BeanProperty val id: String,
+               @BeanProperty val emailAddress: String,
+               var cert: Option[X509Certificate] = None,
+               @BeanProperty var events: ListBuffer[BasicEvent] = ListBuffer()) {
+  //todo: hack BasicEvent used here until unmarshalling abstract class works
+
 
   def sendEmail() = {
     val email = createEmail
@@ -40,13 +42,15 @@ class Workflow private(@BeanProperty val id: String,
     events += new BasicEvent(EventType.waiting, "Waiting for response...")
   }
 
+
   def createEmail: Email = {
     val fromName: String = config.getString("Workflow.fromName")
-    val fromAddress: String = config.getString("Workflow.from")
+    val fromAddress: String = config.getString("Workflow.fromAddress")
     Email(Some(fromName), fromAddress, None, emailAddress,
       "DANE SMIMEA Toolset Mail (" + id + ")",
       "secret message with links for workflow id " + id)
   }
+
 
   def updateCert(): Option[X509Certificate] = {
     val fetched: Option[X509Certificate] = daneSmimeService.fetchCert(emailAddress)
@@ -69,7 +73,25 @@ class Workflow private(@BeanProperty val id: String,
     }
     cert
   }
+
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Workflow]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Workflow =>
+      (that canEqual this) &&
+        id == that.id &&
+        emailAddress == that.emailAddress &&
+        events == that.events
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, emailAddress, events)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
+
 
 object Workflow {
 
@@ -89,7 +111,7 @@ object Workflow {
   def nextId: String = {
     synchronized {
       lastId = Math.max(lastId + 1, System.currentTimeMillis())
-       "%d%d3".format(lastId,Random.nextInt(1000))
+      "%d%d3".format(lastId, Random.nextInt(1000))
     }
   }
 }
@@ -107,18 +129,6 @@ object WorkflowDao {
   }
 }
 
-///////////////////////////// Events
 
-abstract class Event {
-  def eventType: EventType
-
-  def message: String
-
-  def date: Date
-}
-
-class BasicEvent(@BeanProperty val eventType: EventType,
-                 @BeanProperty val message: String,
-                 @BeanProperty val date: Date = new Date) extends Event
 
 
