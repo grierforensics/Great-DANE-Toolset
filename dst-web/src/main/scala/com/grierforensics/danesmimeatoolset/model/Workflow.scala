@@ -1,7 +1,6 @@
 package com.grierforensics.danesmimeatoolset.model
 
 import java.security.cert.X509Certificate
-import java.util.Date
 import java.util.concurrent.ConcurrentHashMap
 
 import com.grierforensics.danesmimeatoolset.model.EventType._
@@ -22,7 +21,7 @@ class Workflow(@BeanProperty val id: String,
   //todo: hack BasicEvent used here until unmarshalling abstract class works
 
 
-  def sendEmail() = {
+  def sendEmail(): Unit = {
     val email = createEmail
 
     val signedEmail: Email = daneSmimeService.sign(email) //sign with generated identity
@@ -43,12 +42,42 @@ class Workflow(@BeanProperty val id: String,
   }
 
 
+  def receivedSignedBad(): Unit = events += new BasicEvent(EventType.error, "Received email with bad signature.")
+
+
+  def receivedSignedOk(): Unit = events += new BasicEvent(EventType.success, "Received email with good signature ")
+
+
   def createEmail: Email = {
     val fromName: String = config.getString("Workflow.fromName")
     val fromAddress: String = config.getString("Workflow.fromAddress")
+    val clickHost = config.getString("Workflow.clickHostUrl")
+
     Email(Some(fromName), fromAddress, None, emailAddress,
-      "DANE SMIMEA Toolset Mail (" + id + ")",
-      "secret message with links for workflow id " + id)
+      "Test Mail from DANE SMIMEA Toolset (" + id + ")",
+      s""" Hello,
+
+         This is a test email sent by the DANE SMIMEA Toolset.
+         If you do not want to receive these emails ... TBD
+
+         At this point, we can tell you:
+
+         - You do/doNot have a valid DANE SMIME record associated with your email address ... TBD
+
+         You may do any of the following options:
+
+         - Reply to this email and a report will be emailed back.
+
+         - If this email looks good and the signature appears valid click here:
+             ${clickHost}/workflow/${id}/click/receivedSignedOk?uiRedirect=true
+
+         - If email signature appears broken click here:
+             ${clickHost}/workflow/${id}/click/receivedSignedBad?uiRedirect=true
+
+         To learn more about DANE SMIME here are some helpful links: ... TBD
+
+
+      """)
   }
 
 

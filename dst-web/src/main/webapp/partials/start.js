@@ -1,15 +1,10 @@
+app.controller('StartCtrl', function ($scope, $http, $location) {
 
-app.controller('StartCtrl', function ($scope) {
-    $scope.email = "user@example.com";
+    $scope.startWorkflow = function() {
+        $http.post('/workflow', $scope.email).success(function (data) {
+            $scope.workflow = data;
+            $location.path("/workflow/"+$scope.workflow.id);
+        });
+    };
 
-    $scope.events = [
-        {
-            'name': 'Nexus S',
-            'snippet': 'Fast just got faster with Nexus S.'
-        },
-        {'name': 'Motorola XOOM™ with Wi-Fi',
-            'snippet': 'The Next, Next Generation tablet.'},
-        {'name': 'MOTOROLA XOOM™',
-            'snippet': 'The Next, Next Generation tablet.'}
-    ];
 });

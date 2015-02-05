@@ -1,5 +1,6 @@
 package com.grierforensics.danesmimeatoolset.rest
 
+import javax.ws.rs.WebApplicationException
 import javax.ws.rs.client.ClientBuilder
 import javax.ws.rs.core.Response
 import javax.ws.rs.ext.{ContextResolver, ExceptionMapper, Provider}
@@ -40,8 +41,13 @@ class Client extends ClientConfig {
 @Provider
 class CatchAllExceptionMapper extends ExceptionMapper[Exception] with LazyLogging {
   def toResponse(ex: Exception): Response = {
-    logger.warn("request failed", ex)
-    Response.status(500).entity(ex.getMessage()).build()
+    ex match {
+      case e: WebApplicationException => e.getResponse
+      case e: Exception => {
+        logger.warn("request failed", ex)
+        Response.status(500).entity(ex.getMessage()).build()
+      }
+    }
   }
 }
 

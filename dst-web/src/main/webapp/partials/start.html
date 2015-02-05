@@ -1,18 +1,18 @@
 <div class="content">
     <div class="form-email-test">
-        <form action="#/status/123456789" method="post"><!--todo hack here until proper ajax call is made-->
+        <form>
             <div class="form-body">
                 <div class="form-row">
                     <label for="field-email" class="form-label">Test your email for <br><span>Dane Smimea</span> support:</label>
 
                     <div class="form-controls">
-                        <input type="email" class="field" name="field-email" id="field-email" value="{{email}}" placeholder="Enter your email address here">
+                        <input type="email" ng-model="email" class="field" name="field-email" id="field-email" value="{{email}}" placeholder="Enter your email address here">
                     </div><!-- /.form-controls -->
                 </div><!-- /.form-row -->
             </div><!-- /.form-body -->
 
             <div class="form-actions">
-                <input type="submit" value="Begin Test" class="form-btn">
+                <input type="submit" ng-click="startWorkflow()" value="Begin Test" class="form-btn">
             </div><!-- /.form-actions -->
         </form>
     </div><!-- /.form-email-test -->

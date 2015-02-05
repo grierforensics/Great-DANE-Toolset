@@ -2,7 +2,8 @@ package com.grierforensics.danesmimeatoolset.model;
 
 public enum EventType {
     sendingAuth,
-    receivedAuthResponse,
+    error,
+    success,
     validCert,
     emailSent,
     waiting,
