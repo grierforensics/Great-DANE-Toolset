@@ -1,8 +1,7 @@
 package com.grierforensics.danesmimeatoolset.rest
 
 import java.nio.file.{Files, Paths}
-import javax.ws.rs.client.Entity
-import javax.ws.rs.core.MediaType
+import javax.ws.rs.InternalServerErrorException
 
 import com.grierforensics.danesmimeatoolset.model.Workflow
 import com.grierforensics.danesmimeatoolset.service.GensonConfig._
@@ -35,7 +34,7 @@ class WebappTests extends FunSuite with BeforeAndAfterAll with JsonRestClient {
   }
 
   test("REST Workflow") {
-    val wfStr1 = post("http://localhost:63636/workflow","dst.bob@example.com")
+    val wfStr1 = post("http://localhost:63636/workflow", "dst.bob@example.com")
     println(wfStr1)
     val wf1: Workflow = genson.deserialize(wfStr1, classOf[Workflow])
 
@@ -45,6 +44,18 @@ class WebappTests extends FunSuite with BeforeAndAfterAll with JsonRestClient {
 
     assert(wf1 == wf2)
     println(wf1)
+  }
+
+  test("REST Bad Emails") {
+    intercept[InternalServerErrorException] {
+      post("http://localhost:63636/workflow", "")
+    }
+    intercept[InternalServerErrorException] {
+      post("http://localhost:63636/workflow", "dst.bobexample.com")
+    }
+
+    //this  bad email should send and bounce silently
+    post("http://localhost:63636/workflow", "iauehpiu3hfpiuhiusadhiluhasfliuhlaisudhliuashf@example.com")
   }
 
 }
