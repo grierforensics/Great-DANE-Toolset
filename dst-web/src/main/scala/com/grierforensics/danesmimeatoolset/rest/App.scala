@@ -5,8 +5,9 @@ import javax.ws.rs.client.ClientBuilder
 import javax.ws.rs.core.Response
 import javax.ws.rs.ext.{ContextResolver, ExceptionMapper, Provider}
 
+import com.grierforensics.danesmimeatoolset.service.GensonConfig
+import com.owlike.genson.Genson
 import com.owlike.genson.ext.jaxrs.GensonJsonConverter
-import com.owlike.genson.{Genson, GensonBuilder, ScalaBundle}
 import com.typesafe.scalalogging.LazyLogging
 import org.glassfish.jersey.client.ClientConfig
 import org.glassfish.jersey.model.ContractProvider
@@ -21,21 +22,9 @@ class App extends ResourceConfig {
 }
 
 object App {
-  val genson = new GensonBuilder().
-    useIndentation(true).
-    useRuntimeType(true).
-    useDateAsTimestamp(true).
-    withBundle(ScalaBundle().useOnlyConstructorFields(false)).
-    create()
-
-  lazy val clientConfig = new ClientConfig().
-    register(new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
+  lazy val clientConfig = new ClientConfig().register(new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
 
   def newClient = ClientBuilder.newClient(clientConfig)
-}
-
-class Client extends ClientConfig {
-  register(new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
 }
 
 @Provider
@@ -53,6 +42,6 @@ class CatchAllExceptionMapper extends ExceptionMapper[Exception] with LazyLoggin
 
 @Provider
 class GensonCustomResolver extends ContextResolver[Genson] {
-  override def getContext(`type`: Class[_]): Genson = App.genson
+  override def getContext(`type`: Class[_]): Genson = GensonConfig.genson
 }
 

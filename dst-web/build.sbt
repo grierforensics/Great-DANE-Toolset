@@ -14,8 +14,7 @@ resolvers += Resolver.sonatypeRepo("releases")
 libraryDependencies ++= Seq(
   "com.grierforensics" %% "dst-core" % "0.1.0-SNAPSHOT",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
-  "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14",
-  "com.owlike" % "genson-scala" % "1.2"
+  "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14"
 )
 
 libraryDependencies ++= Seq( // test

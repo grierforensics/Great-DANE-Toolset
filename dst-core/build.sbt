@@ -12,7 +12,8 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
   "org.slf4j" % "slf4j-api" % "1.7.10",
-  "org.slf4j" % "slf4j-simple" % "1.7.10"
+  "org.slf4j" % "slf4j-simple" % "1.7.10",
+  "com.owlike" % "genson-scala" % "1.2"
 )
 
 libraryDependencies ++= Seq(// test

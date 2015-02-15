@@ -1,6 +1,6 @@
 package com.grierforensics.danesmimeatoolset.model
 
-import com.grierforensics.danesmimeatoolset.rest.App
+import com.grierforensics.danesmimeatoolset.service.GensonConfig
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 class WorkflowTests extends FunSuite with BeforeAndAfterAll {
@@ -19,8 +19,8 @@ class WorkflowTests extends FunSuite with BeforeAndAfterAll {
     val w1 = Workflow("dst.bob@example.com")
     w1.updateCert()
 
-    val j1: String = App.genson.serialize(w1)
-    val w2: Workflow = App.genson.deserialize(j1,classOf[Workflow])
+    val j1: String = GensonConfig.genson.serialize(w1)
+    val w2: Workflow = GensonConfig.genson.deserialize(j1,classOf[Workflow])
     assert(w1===w2)
     println(j1)
   }

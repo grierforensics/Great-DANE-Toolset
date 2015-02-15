@@ -1,12 +1,15 @@
 package com.grierforensics.danesmimeatoolset.rest
 
 import java.nio.file.{Files, Paths}
+import javax.ws.rs.client.Entity
+import javax.ws.rs.core.MediaType
 
 import com.grierforensics.danesmimeatoolset.model.Workflow
+import com.grierforensics.danesmimeatoolset.service.GensonConfig._
 import org.scalatest._;
 
 
-class WebappTests extends FunSuite with BeforeAndAfterAll with RestClient {
+class WebappTests extends FunSuite with BeforeAndAfterAll with JsonRestClient {
 
   val projectRoot = if (Files.exists(Paths.get("dst-web"))) "dst-web/" else "./"
 
@@ -32,13 +35,13 @@ class WebappTests extends FunSuite with BeforeAndAfterAll with RestClient {
   }
 
   test("REST Workflow") {
-    val wfStr1 = post("http://localhost:63636/workflow", Map("email" -> "dst.bob@example.com"), classOf[String])
+    val wfStr1 = post("http://localhost:63636/workflow","dst.bob@example.com")
     println(wfStr1)
-    val wf1: Workflow = App.genson.deserialize(wfStr1, classOf[Workflow])
+    val wf1: Workflow = genson.deserialize(wfStr1, classOf[Workflow])
 
-    val wfStr2 = get("http://localhost:63636/workflow/" + wf1.id, classOf[String])
+    val wfStr2 = get("http://localhost:63636/workflow/" + wf1.id)
     println(wfStr2)
-    val wf2: Workflow = App.genson.deserialize(wfStr2, classOf[Workflow])
+    val wf2: Workflow = genson.deserialize(wfStr2, classOf[Workflow])
 
     assert(wf1 == wf2)
     println(wf1)
