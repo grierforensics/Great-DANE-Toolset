@@ -2,10 +2,11 @@ package com.grierforensics.danesmimeatoolset.model
 
 import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
+import javax.mail.internet.InternetAddress
 
 import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.model.Workflow._
-import com.grierforensics.danesmimeatoolset.service.{DaneSmimeService, EmailSender}
+import com.grierforensics.danesmimeatoolset.service.{EmailFetcher, DaneSmimeService, EmailSender}
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
 
 import scala.beans.BeanProperty
@@ -49,11 +50,9 @@ class Workflow(@BeanProperty val id: String,
 
 
   def createEmail: Email = {
-    val fromName: String = config.getString("Workflow.fromName")
-    val fromAddress: String = config.getString("Workflow.fromAddress")
     val clickHost = config.getString("Workflow.clickHostUrl")
 
-    Email(Some(fromName), fromAddress, None, emailAddress,
+    Email(EmailFetcher.address, new InternetAddress(emailAddress),
       "Test Mail from DANE SMIMEA Toolset (" + id + ")",
       s""" Hello,
 

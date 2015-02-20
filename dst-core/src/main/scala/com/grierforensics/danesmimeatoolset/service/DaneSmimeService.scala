@@ -5,7 +5,7 @@ import java.math.BigInteger
 import java.security._
 import java.security.cert._
 import java.util._
-import javax.mail.internet.{MimeBodyPart, MimeMultipart}
+import javax.mail.internet.{InternetAddress, MimeBodyPart, MimeMultipart}
 import javax.mail.{Address, Message, Part}
 
 import com.grierforensics.danesmimeatoolset.model.Email
@@ -48,7 +48,7 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def sign(email: Email): Email = sign(email, generateIdentity(email.fromFullName.getOrElse(email.fromEmailAddress), email.fromEmailAddress))
+  def sign(email: Email): Email = sign(email, generateIdentity(email.from))
 
 
   def sign(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
@@ -56,9 +56,7 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
     val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(providerName).build("SHA1withRSA", fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
     val signedMultipart: MimeMultipart = toolkit.sign(email.bodyPart, signerInfo)
 
-    Email(email.fromFullName, email.fromEmailAddress,
-      email.toFullName, email.toEmailAddress,
-      email.subject, signedMultipart)
+    Email(email.from, email.to, email.subject, signedMultipart)
   }
 
 
@@ -71,18 +69,19 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def encrypt(email: Email): Email = encrypt(email, fetchCert(email.toEmailAddress).get)
+  def encrypt(email: Email): Email = encrypt(email, fetchCert(email.to.getAddress).orNull)
 
 
   def encrypt(email: Email, toUserCert: X509Certificate): Email = {
+    if (toUserCert == null)
+      throw new Exception("no cert for encryption")
+
     val encryptor: OutputEncryptor = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes128_CBC).setProvider(providerName).build
     val infoGenerator: JceKeyTransRecipientInfoGenerator = new JceKeyTransRecipientInfoGenerator(toUserCert).setProvider(providerName)
 
     val encrypted: MimeBodyPart = toolkit.encrypt(email.multipart, encryptor, infoGenerator)
 
-    Email(email.fromFullName, email.fromEmailAddress,
-      email.toFullName, email.toEmailAddress,
-      email.subject, encrypted)
+    Email(email.from, email.to, email.subject, encrypted)
   }
 
 
@@ -124,6 +123,8 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
     new JcaPKIXIdentityBuilder().setProvider(providerName).build(keyFile, certFile)
   }
 
+
+  def generateIdentity(address: InternetAddress): JcaPKIXIdentity = generateIdentity(address.getPersonal, address.getAddress)
 
   def generateIdentity(fullName: String, emailAddress: String): JcaPKIXIdentity = {
     //The openssl commands used are:
@@ -244,13 +245,15 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
         }
         result
       }
-      case p: Part => {
-        ListBuffer(new ContentPart(p.getContentType, p.getContent))
-      }
-      case any => {
-        ListBuffer(new ContentPart("unknown", any))
-      }
+      case p: Part => ListBuffer(new ContentPart(p.getContentType, p.getContent))
+      case s: String => ListBuffer(new ContentPart("text/plain", scrubTextPlain(s)))
+      case any => ListBuffer(new ContentPart("unknown", any))
     }
+  }
+
+
+  def scrubTextPlain(s: String): String = {
+    s.replaceAll("\r\n$", "")
   }
 
 

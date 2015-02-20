@@ -2,7 +2,7 @@ package com.grierforensics.danesmimeatoolset.service
 
 import java.util.Properties
 import javax.mail._
-import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.internet.MimeMessage
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
@@ -26,14 +26,15 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     }
     val session: Session = Session.getDefaultInstance(props, authenticator)
 
-    val fromUser: Address = new InternetAddress(formatAddress(email.fromFullName, email.fromEmailAddress))
-    val toUser: Address = new InternetAddress(formatAddress(email.toFullName, email.toEmailAddress))
-
     val message: MimeMessage = new MimeMessage(session)
-    message.setFrom(fromUser)
-    message.setRecipient(Message.RecipientType.TO, toUser)
+    message.setFrom(email.from)
+    message.setRecipient(Message.RecipientType.TO, email.to)
     message.setSubject(email.subject)
-    message.setContent(email.message, email.contentType)
+    //    message.setContent(email.content, email.contentType)
+    email.content match {
+      case p: Part if p.getContentType == "text/plain" => message.setContent(p.getContent, p.getContentType)
+      case otherwise => message.setContent(email.content, email.contentType)
+    }
     message.saveChanges
 
     Transport.send(message);
