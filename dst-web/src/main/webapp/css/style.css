@@ -105,7 +105,7 @@ td { padding: 0; }
 \* ================================================================ */
 .ico { background: url(images/sprite.png) no-repeat; display: inline-block; vertical-align: middle; }
 .ico-error-small { width: 37px; height: 36px; background-position: -107px 0; margin: 3px 9px 0px; float: left; }
-.ico-error { width: 59px; height: 59px; background-position: -148px 0; }
+.ico-error { width: 59px; height: 59px; margin:7px; background-position: -148px 0; }
 .ico-process { width: 73px; height: 73px; background-position: -211px 0; }
 .ico-tick-small { width: 41px; height: 31px; background-position: -288px 0; margin: 12px 10px 20px; }
 .ico-tick { width: 82px; height: 64px; background-position: -333px 0; }
@@ -142,7 +142,7 @@ td { padding: 0; }
 	#Sections
 \* ================================================================ */
 .section { width: 669px; min-height: 356px; background: #d8d8d8; margin: 0 auto 27px; box-sizing: border-box; }
-.section-testing { padding: 40px; margin-bottom: 95px; }
+.section-testing { padding: 20px 40px 40px 40px; margin-bottom: 95px; }
 .section-errors { padding: 15px 40px; }
 .section-success { padding: 100px 40px 0; margin-bottom: 95px; }
 .section-results { padding: 88px 40px 20px; }
@@ -153,7 +153,7 @@ td { padding: 0; }
 .section-email .section-entry p { margin-bottom: 12px; }
 .section-email .section-actions { margin-bottom: 10px; }
 .section-boxes { list-style: none outside none; margin-top: 28px; }
-.section-box { overflow: hidden; background: #fff; position: relative; height: 110px; }
+.section-box { overflow: hidden; background: #fff; position: relative; height: 110px; margin-bottom: 15px;  }
 .section-box-big { height: 305px; }
 .section-errors .section-boxes,
 .section-success .section-boxes { margin: 0 0 32px; }
@@ -166,7 +166,7 @@ td { padding: 0; }
 .section-box-content { float: left; box-sizing: border-box; height: 110px; }
 .section-box-icon { width: 112px; }
 .section-box-icon-yellow { background: #ffc233; padding: 18px; }
-.section-box-icon-red { background: #ff4747; padding: 25px; }
+.section-box-icon-red { background: #ff4747; padding: 18px; }
 .section-box-icon-green { background: #00a22e; padding: 27px 15px 0; }
 .section-box-content { width: 477px; background: #fff; padding: 33px 25px; }
 .section-errors .section-box:first-child .section-box-content { padding: 20px 20px 0 28px; }
@@ -182,14 +182,19 @@ td { padding: 0; }
 .section-results .section-box-actions { position: relative; bottom: -49px; right: 7px; text-align: right; }
 .section-notice { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 500; font-style: italic; font-size: 17px; margin-top: 45px; }
 .section-actions { overflow: hidden; }
-.section-box-certificate { border: 2px solid #ccc; position: relative; width: 558px; height: 143px; box-sizing: border-box; bottom: -40px; left: -125px; font-family: Helvetica, Arial, sans-serif; font-size: 21px; padding: 20px 15px 20px 20px; }
+.section-box-certificate { border: 2px solid #ccc; position: relative; width: 558px; box-sizing: border-box; bottom: -43px; left: -125px; font-family: Helvetica, Arial, sans-serif; font-size: 21px; padding: 20px 15px 20px 20px; height: 166px; overflow-y: scroll; overflow-x: hidden;}
 .section-box-certificate a { color: #ff931f; font-family: 'Helvetica Oblique', Arial, sans-serif; }
 .section-box-certificate:after { background: url(images/sprite.png) no-repeat -3px 0; width: 20px; height: 20px; content: ''; position: absolute; top: -2px; left: -2px; }
+.section-box-certificate code { font-size: 12px; line-height: 1; }
 
 /* ================================================================ *\
 	#Content
 \* ================================================================ */
 .content { margin: 0 20px 20px; background: #d8d8d8; float: left; width: 669px; min-height: 434px; }
+.faq h1,.faq h2,.faq h3 {margin-top: 20px; margin-bottom: 10px}
+.faq p {font-size: 17px;}
+.statuspage .section {float:left}
+.statuspage {margin-top: 20px}
 
 /* ================================================================ *\
 	#Form

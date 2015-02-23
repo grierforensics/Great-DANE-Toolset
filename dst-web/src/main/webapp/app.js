@@ -11,6 +11,9 @@ app.config(['$routeProvider',
                 templateUrl: 'partials/start.html',
                 controller: 'StartCtrl'
             }).
+           when('/faq', {
+                templateUrl: 'partials/faq.html'
+            }).
             when('/workflow/:workflowId', {
                 templateUrl: 'partials/status.html',
                 controller: 'StatusCtrl'

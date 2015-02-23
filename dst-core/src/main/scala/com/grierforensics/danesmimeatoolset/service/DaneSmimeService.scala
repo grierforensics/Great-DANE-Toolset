@@ -29,6 +29,7 @@ import org.bouncycastle.operator.{ContentSigner, DigestCalculator, DigestCalcula
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.bouncycastle.util.encoders.Hex
 
+import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
@@ -168,7 +169,10 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
 
 
   def inspectMessage(message: Message, toIdentity: JcaPKIXIdentity, fromCert: X509Certificate): MessageDetails = {
-    val from: Address = message.getFrom()(0)
+    val from = message.getFrom()(0) match {
+      case ia: InternetAddress => ia
+      case a: Address => new InternetAddress(a.toString)
+    }
     val subject: String = message.getSubject()
     val encrypted = toolkit.isEncrypted(message)
     val content: AnyRef = extractContent(message, toIdentity)
@@ -258,7 +262,7 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
 
 
   def validateCert(certHolder: X509CertificateHolder, theirCertificate: X509Certificate): Boolean = {
-    certHolder == new JcaX509CertificateHolder(theirCertificate)
+    theirCertificate != null && certHolder == new JcaX509CertificateHolder(theirCertificate)
   }
 
 
@@ -294,10 +298,10 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
 }
 
 
-class MessageDetails(val from: Address,
-                     val subject: String,
-                     val encrypted: Boolean,
-                     val signingInfo: SigningInfo,
+class MessageDetails(@BeanProperty val from: InternetAddress,
+                     @BeanProperty val subject: String,
+                     @BeanProperty val encrypted: Boolean,
+                     @BeanProperty val signingInfo: SigningInfo,
                      val parts: Seq[ContentPart]) {
   def text: Option[String] = {
     parts.find(_.mimeType.startsWith("text")) match {
@@ -316,10 +320,10 @@ class MessageDetails(val from: Address,
   }
 }
 
-class SigningInfo(val signed: Boolean,
-                  val signatureValid: Boolean,
-                  val signedByCert: Boolean,
-                  val casSigned: Boolean) {
+class SigningInfo(@BeanProperty val signed: Boolean,
+                  @BeanProperty val signatureValid: Boolean,
+                  @BeanProperty val signedByCert: Boolean,
+                  @BeanProperty val casSigned: Boolean) {
 }
 
 class ContentPart(val mimeType: String, val content: AnyRef) {

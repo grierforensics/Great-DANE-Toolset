@@ -5,7 +5,8 @@ public enum EventType {
     error,
     success,
     validCert,
-    emailSent,
+    invalidCert,
+    emailReceived,
     waiting,
     message
 }

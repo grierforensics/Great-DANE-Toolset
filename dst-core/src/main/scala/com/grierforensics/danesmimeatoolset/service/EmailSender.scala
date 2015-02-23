@@ -10,8 +10,7 @@ import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 
 class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) {
 
-  def send(email: Email): Unit = {
-
+  val session: Session = {
     val props: Properties = System.getProperties
     props.put("mail.smtp.host", smtpHost);
     if (useTls) {
@@ -24,10 +23,18 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
         new PasswordAuthentication(username, password)
       }
     }
-    val session: Session = Session.getDefaultInstance(props, authenticator)
+    Session.getDefaultInstance(props, authenticator)
+  }
 
+  def send(email: Email): Unit = {
+    val message: MimeMessage = createMessage(email)
+    Transport.send(message);
+  }
+
+  def createMessage(email: Email): MimeMessage = {
     val message: MimeMessage = new MimeMessage(session)
     message.setFrom(email.from)
+    message.setReplyTo(Array(email.from))
     message.setRecipient(Message.RecipientType.TO, email.to)
     message.setSubject(email.subject)
     //    message.setContent(email.content, email.contentType)
@@ -36,8 +43,7 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
       case otherwise => message.setContent(email.content, email.contentType)
     }
     message.saveChanges
-
-    Transport.send(message);
+    message
   }
 
   private def formatAddress(name: Option[String], address: String): String = {

@@ -1,98 +1,104 @@
+<div class="statuspage">
 <section class="section section-testing">
-    <h3 class="section-title">Testing for DANE SMIMEA Support</h3><!-- /.testing-title -->
+    <h3 class="section-title">Testing for DANE SMIMEA Support for {{workflow.emailAddress}}</h3><!-- /.testing-title -->
 
     <ul class="section-boxes">
-        <li ng-repeat="event in workflow.events" class="section-box">
+        <li ng-repeat="event in workflow.events">
             <div ng-switch on="event.eventType">
 
-                <div ng-switch-when="message">
+                <div ng-switch-when="message" class="section-box">
                     <div class="section-box-icon section-box-icon-yellow">
                         <i class="ico ico-process"></i>
                     </div>
                     <div class="section-box-content">
                         <h2 class="section-box-title">{{event.message}}</h2>
-                        <!--<p><span>{{event.message}}</span></p>-->
                     </div>
                 </div>
 
-                <div ng-switch-when="validCert">
+                <div ng-switch-when="validCert" class="section-box section-box-big">
                     <div class="section-box-icon section-box-icon-green">
                         <i class="ico ico-tick"></i>
                     </div>
-                    <!-- /.section-box-icon section-box-icon-green -->
-
                     <div class="section-box-content">
                         <div class="section-box-entry">
                             <p>
-                                <span>{{event.email}}</span> has a valid SMIMEA certificate published via DNS
+                                <span>{{workflow.emailAddress}}</span> has a valid SMIMEA certificate published via DNS
                             </p>
                         </div>
-                        <!-- /.section-box-entry -->
-
                         <div class="section-box-certificate">
                             <p><strong>Congratulations!</strong> The following certificate data was retrieved:</p>
-                            <code>{{event.certDetails}}</code>
-                        </div>
-                        <!-- /.section-box-certificate -->
-
-                        <div class="section-box-actions">
-                            <a href="#" class="link-hide">+ Hide Certificate</a>
-                        </div>
-                        <!-- /.section-box-actions -->
-                    </div>
-                    <!-- /.section-box-content -->
-                </div>
-
-                <div ng-switch-when="emailSent">
-                    <div class="section-box-icon section-box-icon-green">
-                        <i class="ico ico-tick"></i>
-                    </div>
-                    <div class="section-box-content">
-                        <div class="section-box-entry">
-                            <h2 class="section-box-title">{{event.message}}</h2>
-                            <!--<p><span>{{event.email}}</span> has accepted the request to recieve encrypted email.</p>-->
+                            <code>{{workflow.certData}}</code>
                         </div>
                     </div>
                 </div>
 
-                <div ng-switch-when="waiting">
-                    <div class="section-box-icon section-box-icon-green">
-                        <i class="ico ico-tick"></i>
-                    </div>
-                    <div class="section-box-content">
-                        <div class="section-box-entry">
-                            <h2 class="section-box-title">{{event.message}}</h2>
-                            <!--<p><span>{{event.email}}</span> has accepted the request to recieve encrypted email.</p>-->
-                        </div>
-                    </div>
-                </div>
-
-                <div ng-switch-when="success">
-                    <div class="section-box-icon section-box-icon-green">
-                        <i class="ico ico-tick"></i>
-                    </div>
-                    <div class="section-box-content">
-                        <div class="section-box-entry">
-                            <h2 class="section-box-title">{{event.message}}</h2>
-                            <!--<p><span>{{event.email}}</span> has accepted the request to recieve encrypted email.</p>-->
-                        </div>
-                    </div>
-                </div>
-
-                <div ng-switch-when="error">
-                    <div class="section-box-icon section-box-icon-red">
-                        <i class="ico ico-tick"></i>
-                    </div>
-                    <div class="section-box-content">
-                        <div class="section-box-entry">
-                            <h2 class="section-box-title">{{event.message}}</h2>
-                            <!--<p><span>{{event.email}}</span> has accepted the request to recieve encrypted email.</p>-->
-                        </div>
-                    </div>
-                </div>
-
-                <div ng-switch-default>
+                <div ng-switch-when="invalidCert" class="section-box">
                     <div class="section-box-icon section-box-icon-yellow">
+                        <i class="ico ico-error"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <h2 class="section-box-title">{{event.message}}</h2>
+                        <p>Your email address doesn't have a DANE SMIMEA certificate found in DNS<br/>
+                            {{workflow.emailAddress}}</p>
+                    </div>
+                </div>
+
+                <div ng-switch-when="emailReceived" class="section-box section-box-big">
+                    <div class="section-box-icon section-box-icon-green">
+                        <i class="ico ico-tick"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <h2 class="section-box-title">{{event.message}}</h2>
+                        </div>
+                        <div class="section-box-certificate">
+                            <p>
+                            From: <strong>{{event.details.from}}</strong><br/>
+                            Encrypted: <strong>{{event.details.encrypted}}</strong><br/>
+                            Signed: <strong>{{event.details.signingInfo.signed}}</strong><br/>
+                            Signature Valid: <strong>{{event.details.signingInfo.signatureValid}}</strong><br/>
+                            DANE Signature used: <strong>{{event.details.signingInfo.signedByCert}}</strong> ({{workflow.emailAddress}})
+                            <!--Certificate Authority Signature used: {{event.details.signingInfo.casSigned}}</div>-->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-when="waiting" class="section-box">
+                    <div class="section-box-icon section-box-icon-yellow">
+                        <i class="ico ico-time"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <h2 class="section-box-title">{{event.message}}</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-when="success" class="section-box">
+                    <div class="section-box-icon section-box-icon-green">
+                        <i class="ico ico-tick"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <h2 class="section-box-title">{{event.message}}</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-when="error" class="section-box">
+                    <div class="section-box-icon section-box-icon-red">
+                        <i class="ico ico-error"></i>
+                    </div>
+                    <div class="section-box-content">
+                        <div class="section-box-entry">
+                            <h2 class="section-box-title">{{event.message}}</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-switch-default class="section-box">
+                    <div class="section-box-icon section-box-icon-green">
                         <i class="ico ico-process"></i>
                     </div>
                     <div class="section-box-content">
@@ -107,6 +113,9 @@
     </ul>
     <!-- /.section-boxes -->
 
-    <div class="section-notice">Awaiting Feedback...</div>
+    <div  ng-hide="workflow" class="section-notice">Fetching your info...</div>
     <!-- /.section-notice -->
 </section><!-- /.section section-testing -->
+
+<div ng-include="'partials/sidebar.html'"></div>
+</div>

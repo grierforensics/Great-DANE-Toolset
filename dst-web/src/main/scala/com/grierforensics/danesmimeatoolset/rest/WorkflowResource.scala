@@ -9,6 +9,9 @@ import com.grierforensics.danesmimeatoolset.model.{Workflow, WorkflowDao}
 
 import scala.beans.BeanProperty
 
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+
 @Path("/workflow")
 @Produces(Array(MediaType.APPLICATION_JSON))
 class WorkflowResource {
@@ -21,23 +24,29 @@ class WorkflowResource {
       throw new WebApplicationException("Bad email:" + email, Status.INTERNAL_SERVER_ERROR)
 
     val result: Workflow = Workflow(email)
-    result.sendEmail()
     WorkflowDao.persist(result)
+
+    Future {
+      result.sendEmail()
+    }
+
     result
   }
 
+
   @GET
   @Path("{id}")
-  def workflowStatus(@PathParam("id") id: String): Workflow = {
-    WorkflowDao.fetch(id)
+  def getWorkflow(@PathParam("id") id: String): Workflow = {
+    val w: Option[Workflow] = WorkflowDao.fetch(id)
+    w.getOrElse(
+      throw new WebApplicationException("Workflow id not found:" + id, Status.NOT_FOUND))
   }
+
 
   @GET
   @Path("{id}/click/{token}")
   def click(@PathParam("id") id: String, @PathParam("token") token: String, @QueryParam("uiRedirect") uiRedirect: Boolean): Workflow = {
-    val w: Workflow = WorkflowDao.fetch(id)
-    if (w == null)
-      throw new WebApplicationException("Workflow id not found:" + id, Status.NOT_FOUND)
+    val w: Workflow = getWorkflow(id)
 
     token match {
       case "receivedSignedOk" => w.receivedSignedOk()
@@ -51,11 +60,13 @@ class WorkflowResource {
     w
   }
 
+
   @GET
   @Path("echo/{echo}")
   def getEcho(@PathParam("echo") echo: String): Echo = {
     new Echo(echo, Count.next)
   }
+
 }
 
 object Count {

@@ -39,11 +39,10 @@ class WebappTests extends FunSuite with BeforeAndAfterAll with JsonRestClient {
     val wf1: Workflow = genson.deserialize(wfStr1, classOf[Workflow])
 
     val wfStr2 = get("http://localhost:63636/workflow/" + wf1.id)
-    println(wfStr2)
+    //println(wfStr2)
     val wf2: Workflow = genson.deserialize(wfStr2, classOf[Workflow])
 
-    assert(wf1 == wf2)
-    println(wf1)
+    assert(wfStr1 == wfStr2)
   }
 
   test("REST Bad Emails") {

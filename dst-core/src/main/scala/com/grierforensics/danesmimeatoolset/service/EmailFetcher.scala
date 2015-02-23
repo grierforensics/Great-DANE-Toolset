@@ -79,13 +79,23 @@ class EmailFetcher(val pop3Host: String,
       if (period > 0)
         asyncTimer.schedule(new TimerTask {
           override def run(): Unit = {
-            fetchAndDelete(handler)
+            try {
+              fetchAndDelete(handler)
+            }
+            catch {
+              case e: Exception => logger.warn("Email fetch failed.", e)
+            }
           }
         }, 0, period)
       else
         asyncTimer.schedule(new TimerTask {
           override def run(): Unit = {
-            fetchAndDelete(handler)
+            try {
+              fetchAndDelete(handler)
+            }
+            catch {
+              case e: Exception => logger.warn("Email fetch failed.", e)
+            }
             asyncStop() //mark this as stopped because no periodic tasks are coming
           }
         }, 0)

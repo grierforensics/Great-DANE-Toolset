@@ -1,0 +1,87 @@
+<div class="faq">
+
+<h1>DANE SMIMEA FAQ</h1>
+
+<h3>What does DANE SMIMEA do?</h3>
+
+<p>DANE SMIMEA allows you to have a private, encrypted, secure conversation with
+    anyone in the world using standard email. You can use your regular email account
+    and any compatible email software.</p>
+
+<h3>Isn’t email already private?</h3>
+
+<p><strong>No.</strong> Many parties are already able to read every email you send or receive. Your email
+    provider, for example, can almost certainly read your emails. In the US, they may
+    have a legal right to do so[link]. Many providers are already reading emails so they
+    can profile people and present targeted advertisements.</p>
+
+<p>Besides your email provider, your ISP may be able to read your emails. Since email
+    delivery typically involves multiple ISPs, other ISPs may be able to do so as well.
+    Likewise, when you email a friend, your friend’s email provider can read the email as
+    well. Finally, a hacker who has attacked an ISP may be able to read all the emails that
+    the ISP delivers.</p>
+
+<h3>How does DANE SMIMEA keep my email private?</h3>
+
+<p>Email encryption[link to S/MIME] has been around for decades. But to use it, you
+    must already have a certificate belonging to the person you are emailing. Say you
+    want to email bob@example.com: To encrypt the email, you need Bob’s certificate. But
+    how do you get it? Bob can’t email it to you securely until you can exchange
+    encrypted emails, and you can’t do that without his certificate. You’re stuck with a
+    chicken and egg problem.
+    DANE SMIMEA solves this by providing a secure, distributed public database where
+    anyone with an email address can securely publish their certificate. When you want
+    to email Bob, your email software automatically fetches Bob’s certificate and uses it to
+    encrypt and secure your email to Bob.</p>
+
+<h3>What other protection does DANE SMIMEA provide?</h3>
+
+<p>DANE SMIMEA can verify email and confirm that the “From” address is authentic.
+    This prevents phishing attacks and email forgery. Phishing, where you get a forged
+    email claiming to be from someone you trust, causes XXXX. DANE SMIMEA may be
+    able to curb that, letting you know whether an email claiming to be from your bank is
+    really from your bank.</p>
+
+<h3>Great. How do I get started using DANE SMIMEA?</h3>
+
+<p>Right now, while most email software supports S/MIME encryption[link], no major
+    email software supports DANE SMIMEA out of the box. You can let your software
+    provider know you want DANE SMIMEA support. The tools and information on this
+    site are designed to make that easier.If you’re a developer, consider adding support for DANE SMIMEA. Once you
+    already support S/MIME, adding DANE SMIMEA is easy. The tools on this site
+    should help you, and we provide open source DANE SMIMEA libraries and
+    software[link] you can incorporate for free. Commercial DANE SMIMEA support and
+    consulting[link] is also available.</p>
+
+<h2>Technical</h2>
+
+<h3>What’s the relationship between DANE SMIMEA and S/MIME?</h3>
+
+<p>S/MIME allows encrypting, signing, and verifying emails, but requires you to first
+    have your correspondent’s certificate. DANE SMIMEA allows you to get that
+    certificate via the DNS[link]. The DNS is already the backbone of the Internet: it’s
+    used in nearly every email delivery already.</p>
+
+<h3>Doesn’t SMTP TLS (SSL) already encrypt email?</h3>
+
+<p>TLS is important technology which should be used, but it only encrypts email while
+    it’s in transit between ISPs or email providers. TLS doesn’t prevent your email
+    provider itself from reading your email. Moreover, as an end user, you have no way
+    to control or even know if TLS is being used. An ISP may use it for some of your
+    email but not others, and you’ll have no way to know.
+    DANE SMIMEA, on the other hand, keeps your email encrypted from the moment
+    you send it until your intended recipient opens it. No one else in between can read
+    your email.</p>
+
+<h3>Where can I learn more? XXX</h3>
+
+<h3>Who created this toolset?</h3>
+
+<p>The DANE SMIMEA Toolset and website[link] are created
+    and maintained by Grier Forensics[link] {with support by Comcast - do they want
+    this?}. It’s 100% open source, so you’re free to download it[link] and run your own
+    instance, and experiment with and modify the code.
+    DANE SMIMEA itself, along with S/MIME, DNS, and DNSSEC, are open IETF
+    standards, created by contributors around the world. [links].</p>
+
+</div>
