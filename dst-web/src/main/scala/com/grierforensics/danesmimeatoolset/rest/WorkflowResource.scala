@@ -9,9 +9,6 @@ import com.grierforensics.danesmimeatoolset.model.{Workflow, WorkflowDao}
 
 import scala.beans.BeanProperty
 
-import scala.concurrent._
-import ExecutionContext.Implicits.global
-
 @Path("/workflow")
 @Produces(Array(MediaType.APPLICATION_JSON))
 class WorkflowResource {
@@ -26,9 +23,7 @@ class WorkflowResource {
     val result: Workflow = Workflow(email)
     WorkflowDao.persist(result)
 
-    Future {
-      result.sendEmail()
-    }
+    result.sendEmailAsync()
 
     result
   }
@@ -73,7 +68,8 @@ object Count {
   private var count = 0
 
   def next = {
-    count += 1; count
+    count += 1;
+    count
   }
 }
 

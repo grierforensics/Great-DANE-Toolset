@@ -8,7 +8,7 @@ import javax.mail.internet.InternetAddress
 
 import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.model.Workflow._
-import com.grierforensics.danesmimeatoolset.service.{DaneSmimeService, EmailSender, MessageDetails}
+import com.grierforensics.danesmimeatoolset.service.{DaneSmimeaService, EmailSendFailedException, EmailSender, MessageDetails}
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
 import com.typesafe.scalalogging.LazyLogging
 import org.bouncycastle.cert.X509CertificateHolder
@@ -16,6 +16,7 @@ import org.bouncycastle.util.encoders.Base64
 
 import scala.beans.BeanProperty
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 import scala.util.Random
 
 ///////////////////////////// Workflow
@@ -31,29 +32,43 @@ class Workflow(@BeanProperty val id: String,
   val to: InternetAddress = new InternetAddress(emailAddress)
   val clickHost = config.getString("Workflow.clickHostUrl")
 
-  events += new Event(waiting, "Starting validation ...")
-
-
   def sendEmail(): Unit = {
     val email = createEmail
 
-    val signedEmail: Email = daneSmimeService.sign(email, dstIdentity)
+    val signedEmail: Email = daneSmimeaService.sign(email, dstIdentity)
 
     updateCert() match {
       case Some(c) => {
-        val encryptedEmail: Email = daneSmimeService.encrypt(signedEmail, c)
+        setWaiting("Sending email ...")
+        val encryptedEmail: Email = daneSmimeaService.encrypt(signedEmail, c)
         sender.send(encryptedEmail)
         events += new Event(success, "Sent encrypted email.")
         sender.send(signedEmail)
         events += new Event(success, "Sent signed email as backup.")
       }
       case None => {
+        setWaiting("Sending email ...")
         sender.send(signedEmail)
         events += new Event(success, "Sent signed email.")
       }
     }
 
-    events += new Event(waiting, "Please check your email ...")
+    setWaiting("Please check your email ...")
+  }
+
+
+  def sendEmailAsync(): Unit = {
+    Future {
+      try {
+        sendEmail()
+      }
+      catch {
+        case e: EmailSendFailedException => {
+          events += new Event(error, "Trouble sending email.")
+          logger.error("Unable to send email", e)
+        }
+      }
+    }
   }
 
 
@@ -100,7 +115,9 @@ class Workflow(@BeanProperty val id: String,
 
 
   def updateCert(): Option[X509Certificate] = {
-    val fetched: Option[X509Certificate] = daneSmimeService.fetchCert(emailAddress)
+    setWaiting("Looking up DANE DNS ...")
+
+    val fetched: Option[X509Certificate] = daneSmimeaService.fetchCert(emailAddress)
     fetched match {
       case Some(f) if cert.isEmpty => {
         events += new Event(validCert, "Found cert :" + f) //todo: create cert event with proper message
@@ -126,7 +143,7 @@ class Workflow(@BeanProperty val id: String,
 
 
   def handleMessage(message: Message) = {
-    val md: MessageDetails = daneSmimeService.inspectMessage(message, dstIdentity, cert.orNull)
+    val md: MessageDetails = daneSmimeaService.inspectMessage(message, dstIdentity, cert.orNull)
     events += new EmailReceivedEvent(emailReceived, "Email reply received!", md)
     dropWaiting()
 
@@ -134,15 +151,22 @@ class Workflow(@BeanProperty val id: String,
   }
 
 
+  def setWaiting(message: String, dropOldWaiting: Boolean = true): Unit = {
+    if (dropOldWaiting)
+      dropWaiting()
+
+    events += new Event(waiting, message)
+  }
+
+
   def dropWaiting() = {
-    val newEvents: ListBuffer[Event] = events.filter(waiting != _.eventType)
-    events = newEvents
+    events = events.filter(waiting != _.eventType)
   }
 
   def certDescription: String = {
     cert match {
-      case Some(c) => s"You have a valid DANE SMIME record associated with your email address! ($emailAddress)\n"
-      case None => s"Sorry, you do not have a valid DANE SMIME record associated with your email address ($emailAddress)"
+      case Some(c) => s"You have a valid DANE SMIMEA record associated with your email address! ($emailAddress)\n"
+      case None => s"Sorry, you do not have a valid DANE SMIMEA record associated with your email address ($emailAddress)"
     }
   }
 
@@ -171,11 +195,11 @@ class Workflow(@BeanProperty val id: String,
 
 
 object Workflow {
-  val daneSmimeService = DaneSmimeService
+  val daneSmimeaService = DaneSmimeaService
   val sender = EmailSender
 
   val dstAddress: InternetAddress = new InternetAddress(config.getString("Workflow.fromAddress"), config.getString("Workflow.fromName"))
-  val dstIdentity = daneSmimeService.generateIdentity(dstAddress)
+  val dstIdentity = daneSmimeaService.generateIdentity(dstAddress)
   val dstCertBase64Str = Base64.toBase64String(new X509CertificateHolder(dstIdentity.getX509Certificate.getEncoded).getEncoded) //todo: fix this needs testing
 
   def apply(email: String) = {
