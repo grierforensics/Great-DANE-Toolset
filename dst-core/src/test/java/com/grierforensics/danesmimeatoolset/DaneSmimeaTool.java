@@ -44,7 +44,7 @@ import java.util.*;
  * This is sample workflow code that doesn't currently work when run, because the sample email addresses don't have DNS setup (i think)
  * This was copied from Jonathan Grier and refactored to it's current state.
  */
-public class DaneSmimeTool {
+public class DaneSmimeaTool {
 
     public static void main(String[] args)
             throws Exception {

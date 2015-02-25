@@ -35,7 +35,7 @@ import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
 
 
-class DaneSmimeService(val dnsServer: String) extends LazyLogging {
+class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   val bouncyCastleProviderSetup = BouncyCastleProviderSetup
   val providerName: String = "BC"
   val digestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(providerName).build
@@ -61,7 +61,7 @@ class DaneSmimeService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def fetchCert(emailAddress: String) = fetchCertForEmailAddress(digestCalculatorProvider, emailAddress)
+  def fetchCert(emailAddress: String): Option[X509Certificate] = fetchCertForEmailAddress(digestCalculatorProvider, emailAddress)
 
 
   def getDANEEntryZoneLine(de: DANEEntry): String = {
@@ -345,7 +345,7 @@ class DecryptionException(message: String) extends Exception(message)
 
 //// Companion objects
 
-object DaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeService.dns"))
+object DaneSmimeaService extends DaneSmimeaService(config.getString("DaneSmimeaService.dns"))
 
 object BouncyCastleProviderSetup {
   Security.addProvider(new BouncyCastleProvider)

@@ -2,14 +2,14 @@ package com.grierforensics.danesmimeatoolset
 
 import java.security.cert.X509Certificate
 
-import com.grierforensics.danesmimeatoolset.service.DaneSmimeService
+import com.grierforensics.danesmimeatoolset.service.DaneSmimeaService
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 
 /**
  * DaneSmimeService that generates identities when the DANE SMIME cert is unavailable.
  */
-class TestDaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeService.dns")) {
+class TestDaneSmimeaService extends DaneSmimeaService(config.getString("DaneSmimeaService.dns")) {
 
   val identities = collection.mutable.HashMap[String, JcaPKIXIdentity]()
 
@@ -19,7 +19,7 @@ class TestDaneSmimeService extends DaneSmimeService(config.getString("DaneSmimeS
         val ident: JcaPKIXIdentity = identities.getOrElse(emailAddress, generateIdentity("Fake Identity", emailAddress))
         Option(ident.getX509Certificate)
       }
-      case identOption => identOption
+      case o: Option[X509Certificate] => o
     }
   }
 

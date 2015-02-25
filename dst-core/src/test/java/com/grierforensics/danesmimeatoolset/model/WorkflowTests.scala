@@ -2,12 +2,11 @@ package com.grierforensics.danesmimeatoolset.model
 
 import javax.mail.internet.InternetAddress
 
-import com.grierforensics.danesmimeatoolset.service.GensonConfig.genson
-import com.grierforensics.danesmimeatoolset.service.{EmailSender, GensonConfig}
+import com.grierforensics.danesmimeatoolset.service.EmailSender
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 class WorkflowTests extends FunSuite with BeforeAndAfterAll {
-  val message = EmailSender.createMessage(Email(new InternetAddress("a@b.c"),new InternetAddress("x@y.z"),"subject","body"))
+  val message = EmailSender.createMessage(Email(new InternetAddress("a@b.c"), new InternetAddress("x@y.z"), "subject", "body"))
 
   test("happy path") {
     val w1 = Workflow("dst.bob@example.com")

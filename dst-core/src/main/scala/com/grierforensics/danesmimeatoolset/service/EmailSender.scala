@@ -6,9 +6,10 @@ import javax.mail.internet.MimeMessage
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
+import com.typesafe.scalalogging.LazyLogging
 
 
-class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) {
+class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) extends LazyLogging {
 
   val session: Session = {
     val props: Properties = System.getProperties
@@ -28,7 +29,12 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
 
   def send(email: Email): Unit = {
     val message: MimeMessage = createMessage(email)
-    Transport.send(message);
+    try {
+      Transport.send(message)
+    }
+    catch {
+      case e: Exception => throw new EmailSendFailedException(e)
+    }
   }
 
   def createMessage(email: Email): MimeMessage = {
@@ -59,3 +65,5 @@ object EmailSender extends EmailSender(
   config.getString("EmailSender.username"),
   config.getString("EmailSender.password"),
   true)
+
+class EmailSendFailedException(cause:Throwable) extends Exception(cause)
