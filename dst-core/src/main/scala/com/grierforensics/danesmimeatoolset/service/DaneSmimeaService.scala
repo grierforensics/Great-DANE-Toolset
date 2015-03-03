@@ -4,6 +4,7 @@ import java.io.{File, InputStream}
 import java.math.BigInteger
 import java.security._
 import java.security.cert._
+import java.util
 import java.util._
 import javax.mail.internet.{InternetAddress, MimeBodyPart, MimeMultipart}
 import javax.mail.{Address, Message, Part}
@@ -15,10 +16,10 @@ import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x500.{X500Name, X500NameBuilder}
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier
+import org.bouncycastle.cert.dane._
 import org.bouncycastle.cert.dane.fetcher.JndiDANEFetcherFactory
-import org.bouncycastle.cert.dane.{DANECertificateFetcher, DANEEntry, DANEEntryFactory, DANEException}
 import org.bouncycastle.cert.jcajce.{JcaX509CertificateConverter, JcaX509CertificateHolder, JcaX509v1CertificateBuilder}
-import org.bouncycastle.cert.{X509CertificateHolder, X509v1CertificateBuilder}
+import org.bouncycastle.cert.{X509CertificateHolder, X509v1CertificateBuilder, dane}
 import org.bouncycastle.cms.jcajce._
 import org.bouncycastle.cms.{KeyTransRecipientId, RecipientId, SignerInfoGenerator, SignerInformation}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -31,15 +32,20 @@ import org.bouncycastle.util.encoders.Hex
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
-import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
 
 
 class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
-  val bouncyCastleProviderSetup = BouncyCastleProviderSetup
+  BouncyCastleProviderSetup.init()
+
   val providerName: String = "BC"
+  val daneType: String = "65500"
   val digestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(providerName).build
   val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
+  val daneEntryFactory = new DANEEntryFactory(sha224Calculator)
+  val daneFetcherFactory: JndiDANEFetcherFactory = new JndiDANEFetcherFactory().usingDNSServer(dnsServer)
+  val daneEntryFetcher: DANEEntryFetcher = new DANEEntryFetcher(daneFetcherFactory, sha224Calculator)
+  val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
 
   val toolkit: SMIMEToolkit = new SMIMEToolkit(digestCalculatorProvider)
 
@@ -61,12 +67,31 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def fetchCert(emailAddress: String): Option[X509Certificate] = fetchCertForEmailAddress(digestCalculatorProvider, emailAddress)
+  def fetchCert(emailAddress: String): Option[X509Certificate] = {
+    fetchDaneEntries(emailAddress) match {
+      case Nil => None
+      case daneEntries => Option(getCert(daneEntries.head))
+    }
+  }
 
 
-  def getDANEEntryZoneLine(de: DANEEntry): String = {
-    val encoded: Array[Byte] = de.getCertificate.getEncoded
-    """%s 299 IN TYPE65500 \# %d %s""".format(de.getDomainName, encoded.length, Hex.toHexString(encoded))
+  def fetchCerts(emailAddress: String): Seq[X509Certificate] = {
+    fetchDaneEntries(emailAddress).map(getCert(_))
+  }
+
+
+  def fetchDaneEntries(emailAddress: String): Seq[DANEEntry] = {
+    try {
+      daneEntryFetcher.fetch(emailAddress)
+    }
+    catch {
+      case e: DANEException if e.getMessage.contains("DNS name not found") => Nil
+    }
+  }
+
+
+  def getCert(daneEntry: DANEEntry): X509Certificate = {
+    certConverter.getCertificate(daneEntry.getCertificate)
   }
 
 
@@ -86,34 +111,25 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  private def fetchCertForEmailAddress(digestCalculatorProvider: DigestCalculatorProvider, toEmailAddress: String): Option[X509Certificate] = {
-    val fetcher: JndiDANEFetcherFactory = new JndiDANEFetcherFactory().usingDNSServer(dnsServer)
-    val certFetcher: DANECertificateFetcher = new DANECertificateFetcher(fetcher, sha224Calculator)
-    try {
-      val userCertHolder: X509CertificateHolder = certFetcher.fetch(toEmailAddress).get(0).asInstanceOf[X509CertificateHolder]
-      val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
-
-      Option(certConverter.getCertificate(userCertHolder))
-    }
-    catch {
-      case e: DANEException if e.getMessage.contains("DNS name not found") => None
-    }
-  }
-
-
   def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
     createDANEEntry(email, cert.getEncoded)
   }
 
 
   def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
-    val daneEntryFactory = new DANEEntryFactory(sha224Calculator)
     val holder: X509CertificateHolder = new X509CertificateHolder(certBytes)
     val entry: DANEEntry = daneEntryFactory.createEntry(email, holder)
     entry
   }
 
 
+  def getDnsZoneLineForDaneEntry(de: DANEEntry): String = {
+    val encoded: Array[Byte] = de.getRDATA
+    val hex: String = Hex.toHexString(encoded).toUpperCase
+    s"${de.getDomainName}. 299 IN TYPE$daneType \\# ${encoded.length} ${hex}"
+  }
+
+  
   def loadIdentity(keyFileName: String, certFileName: String): JcaPKIXIdentity = {
     val keyFile: File = new File(keyFileName)
     if (!keyFile.canRead) {
@@ -217,10 +233,10 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
         val certHolder: X509CertificateHolder = toolkit.extractCertificate(mm, signerInformation)
         val isSignatureValid: Boolean = toolkit.isValidSignature(mm, new JcaSimpleSignerInfoVerifierBuilder().setProvider(providerName).build(certHolder))
 
-        val certMatchesThierCert: Boolean = validateCert(certHolder, fromCert)
+        val certMatchesTheirCert: Boolean = certMatchesReference(certHolder, fromCert)
         val certPathValid: Boolean = false //validateCertPath(certHolder)
 
-        new SigningInfo(true, isSignatureValid, certMatchesThierCert, certPathValid)
+        new SigningInfo(true, isSignatureValid, certMatchesTheirCert, certPathValid)
       }
       case p: Part if toolkit.isSigned(p) => {
         val smimeSigned = new SMIMESigned(p)
@@ -228,10 +244,10 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
         val certHolder: X509CertificateHolder = toolkit.extractCertificate(p, signerInformation)
         val isSignatureValid: Boolean = toolkit.isValidSignature(p, new JcaSimpleSignerInfoVerifierBuilder().setProvider(providerName).build(certHolder))
 
-        val certMatchesThierCert: Boolean = validateCert(certHolder, fromCert)
+        val certMatchesTheirCert: Boolean = certMatchesReference(certHolder, fromCert)
         val certPathValid: Boolean = false //validateCertPath(certHolder)
 
-        new SigningInfo(true, isSignatureValid, certMatchesThierCert, certPathValid)
+        new SigningInfo(true, isSignatureValid, certMatchesTheirCert, certPathValid)
       }
       case _ => {
         new SigningInfo(false, false, false, false)
@@ -240,7 +256,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def extractContentParts(content: AnyRef): Seq[ContentPart] = {
+  private def extractContentParts(content: AnyRef): Seq[ContentPart] = {
     content match {
       case mm: MimeMultipart => {
         var result: ListBuffer[ContentPart] = ListBuffer()
@@ -256,48 +272,55 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def scrubTextPlain(s: String): String = {
+  private def scrubTextPlain(s: String): String = {
     s.replaceAll("\r\n$", "")
   }
 
 
-  def validateCert(certHolder: X509CertificateHolder, theirCertificate: X509Certificate): Boolean = {
-    theirCertificate != null && certHolder == new JcaX509CertificateHolder(theirCertificate)
+  private def certMatchesReference(certHolder: X509CertificateHolder, reference: X509Certificate): Boolean = {
+    reference != null && certHolder == new JcaX509CertificateHolder(reference) //?maybe we should compare certs rather than holders here?
   }
 
 
-  def validateCertPath(certHolder: X509CertificateHolder): Boolean = {
-    val converter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
-    val rootCert: X509Certificate = null
-    val list = ListBuffer(converter.getCertificate(certHolder))
+  /**
+   * Validates an athority based cert path.
+   */
+  private def validateCertPath(certHolder: X509CertificateHolder): Boolean = {
+    throw new NotImplementedError("Has not been tested yet and shouldn't be called.  (copied from demo code)")
 
-    // TODO: add other certificates and possible CRLs to the CertStore.
-    val ccsp: CollectionCertStoreParameters = new CollectionCertStoreParameters(list)
-    val store: CertStore = CertStore.getInstance("Collection", ccsp, providerName)
-
-    //Searching for rootCert by subjectDN without CRL
-    val trust = HashSet(new TrustAnchor(rootCert, null))
-
-    try {
-      val cpb: CertPathBuilder = CertPathBuilder.getInstance("PKIX", providerName)
-      val targetConstraints: X509CertSelector = new X509CertSelector
-      targetConstraints.setSubject(certHolder.getSubject.getEncoded)
-      val params: PKIXBuilderParameters = new PKIXBuilderParameters(trust, targetConstraints)
-      params.addCertStore(store)
-      val result: PKIXCertPathBuilderResult = cpb.build(params).asInstanceOf[PKIXCertPathBuilderResult]
-      return true
-    }
-    catch {
-      case e: Exception => {
-        logger.warn("Unable to validate certificate path", e)
-      }
-    }
-
-    return false
+    //val converter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
+    //val rootCert: X509Certificate = null
+    //val list = ListBuffer(converter.getCertificate(certHolder))
+    //
+    //// TODO: add other certificates and possible CRLs to the CertStore.
+    //val ccsp: CollectionCertStoreParameters = new CollectionCertStoreParameters(list)
+    //val store: CertStore = CertStore.getInstance("Collection", ccsp, providerName)
+    //
+    ////Searching for rootCert by subjectDN without CRL
+    //val trust = HashSet(new TrustAnchor(rootCert, null))
+    //
+    //try {
+    //  val cpb: CertPathBuilder = CertPathBuilder.getInstance("PKIX", providerName)
+    //  val targetConstraints: X509CertSelector = new X509CertSelector
+    //  targetConstraints.setSubject(certHolder.getSubject.getEncoded)
+    //  val params: PKIXBuilderParameters = new PKIXBuilderParameters(trust, targetConstraints)
+    //  params.addCertStore(store)
+    //  val result: PKIXCertPathBuilderResult = cpb.build(params).asInstanceOf[PKIXCertPathBuilderResult]
+    //  return true
+    //}
+    //catch {
+    //  case e: Exception => {
+    //    logger.warn("Unable to validate certificate path", e)
+    //  }
+    //}
+    //
+    //return false
   }
 }
 
-
+/**
+ * Value Object class to describe a mail Message encryption and signing information.
+ */
 class MessageDetails(@BeanProperty val from: InternetAddress,
                      @BeanProperty val subject: String,
                      @BeanProperty val encrypted: Boolean,
@@ -314,18 +337,24 @@ class MessageDetails(@BeanProperty val from: InternetAddress,
     val partsDump = parts.mkString("\n")
 
     s"""=== $from - $subject
-       |--- encrypted:$encrypted signed:${signingInfo.signed} signatureValid:${signingInfo.signatureValid} signedByCert:${signingInfo.signedByCert} casSigned:${signingInfo.casSigned}
-       |$partsDump
+        |--- encrypted:$encrypted signed:${signingInfo.signed} signatureValid:${signingInfo.signatureValid} signedByCert:${signingInfo.signedByCert} casSigned:${signingInfo.casSigned}
+        |$partsDump
      """.stripMargin
   }
 }
 
+/**
+ * Value Object class to describe a mail Message signing information.
+ */
 class SigningInfo(@BeanProperty val signed: Boolean,
                   @BeanProperty val signatureValid: Boolean,
                   @BeanProperty val signedByCert: Boolean,
                   @BeanProperty val casSigned: Boolean) {
 }
 
+/**
+ * Value Object class to hold mime content and mimeType
+ */
 class ContentPart(val mimeType: String, val content: AnyRef) {
   override def toString: String = {
     val contentStr = content match {
@@ -341,12 +370,38 @@ class ContentPart(val mimeType: String, val content: AnyRef) {
   }
 }
 
+/**
+ * General Exception for decryption problems.
+ */
 class DecryptionException(message: String) extends Exception(message)
 
-//// Companion objects
-
+/**
+ * Singleton DaneSmimeaService based on config dns
+ */
 object DaneSmimeaService extends DaneSmimeaService(config.getString("DaneSmimeaService.dns"))
 
+/**
+ * Singleton to add BouncyCastleProvider to java Security exactly once.
+ */
 object BouncyCastleProviderSetup {
   Security.addProvider(new BouncyCastleProvider)
+
+  def init() = {} //noop - this method provides a descriptive way to ensure this singleton is initialized/touched
+}
+
+/**
+ * Class that fetches DANEEntry's for given email addressses
+ */
+class DANEEntryFetcher(private val fetcherFactory: DANEEntryFetcherFactory, private val selectorFactory: DANEEntrySelectorFactory) {
+  def this(fetcherFactory: DANEEntryFetcherFactory, digestCalculator: DigestCalculator) {
+    this(fetcherFactory, new DANEEntrySelectorFactory(digestCalculator))
+  }
+
+  @throws(classOf[DANEException])
+  def fetch(emailAddress: String): Seq[DANEEntry] = {
+    val daneSelector: DANEEntrySelector = selectorFactory.createSelector(emailAddress)
+    val fetcher: dane.DANEEntryFetcher = fetcherFactory.build(daneSelector.getDomainName)
+    val matches: util.List[DANEEntry] = fetcher.getEntries.asInstanceOf[util.List[DANEEntry]]
+    matches.filter(daneSelector.`match`(_))
+  }
 }

@@ -1,11 +1,10 @@
 package com.grierforensics.danesmimeatoolset.rest
 
+import java.net.URLEncoder
 import javax.ws.rs._
 import javax.ws.rs.client.Entity
-import javax.ws.rs.client.Invocation.Builder
-import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.Response.Status.Family
-import javax.ws.rs.core.{Form, MediaType, Response}
+import javax.ws.rs.core.{Form, GenericType, MediaType, Response}
 
 
 /**
@@ -15,51 +14,72 @@ import javax.ws.rs.core.{Form, MediaType, Response}
  */
 trait JsonRestClient {
 
-  def get[T](url: String): String = get(url, classOf[String])
-
-
-  def get[T](url: String, returnClass: Class[T]): T = {
-    val client: Builder = App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE)
-    handleResponse(client.get(), returnClass)
+  //get
+  def getResponse[T](url: String): Response = {
+    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).get()
   }
 
+  def get[T](url: String): String = handleResponse(getResponse(url), classOf[String])
 
-  def post(url: String, body: Any): String = post(url, body, classOf[String])
+  def get[T](url: String, entityType: Class[T]): T = handleResponse(getResponse(url), entityType)
+
+  def get[T](url: String, entityType: GenericType[T]): T = handleResponse(getResponse(url), entityType)
 
 
-  def post[T](url: String, any: Any, returnClass: Class[T]): T = {
+  //post
+
+  def postToResponse[T](url: String, any: Any): Response = {
     val entity: Entity[Any] = Entity.entity(any, MediaType.APPLICATION_JSON)
-    post(url, entity, returnClass)
+    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
   }
 
+  def post[T](url: String, any: Any): String = handleResponse(postToResponse(url, any), classOf[String])
 
-  def post(url: String, body: Entity[_]): String = post(url, body, classOf[String])
+  def post[T](url: String, any: Any, entityType: Class[T]): T = handleResponse(postToResponse(url, any), entityType)
 
-
-  def post[T](url: String, entity: Entity[_], returnClass: Class[T]): T = {
-    val client: Builder = App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE)
-    handleResponse(client.post(entity), returnClass)
-  }
+  def post[T](url: String, any: Any, entityType: GenericType[T]): T = handleResponse(postToResponse(url, any), entityType)
 
 
-  def postForm(url: String, params: Map[String, String]): String = postForm(url, params, classOf[String])
+  //post form
 
-
-  def postForm[T](url: String, params: Map[String, String], returnClass: Class[T]): T = {
+  def postFormToResponse[T](url: String, params: Map[String, String]): Response = {
     val form = new Form()
     for ((k, v) <- params)
       form.param(k, v)
     val entity: Entity[Form] = Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE)
 
-    val client: Builder = App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE)
-    handleResponse(client.post(entity), returnClass)
+    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
+  }
+
+  def postForm[T](url: String, params: Map[String, String]): String =
+    handleResponse(postFormToResponse(url, params), classOf[String])
+
+  def postForm[T](url: String, params: Map[String, String], entityType: Class[T]): T =
+    handleResponse(postFormToResponse(url, params), entityType)
+
+  def postForm[T](url: String, params: Map[String, String], entityType: GenericType[T]): T =
+    handleResponse(postFormToResponse(url, params), entityType)
+
+
+  //response handling
+
+  def handleResponse[T](response: Response, entityType: Class[T]): T = {
+    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL)
+      return response.readEntity(entityType)
+    else
+      throwForResponse(response)
   }
 
 
-  def handleResponse[T](response: Response, returnClass: Class[T]): T = {
+  def handleResponse[T](response: Response, entityType: GenericType[T]): T = {
     if (response.getStatusInfo.getFamily == Family.SUCCESSFUL)
-      return response.readEntity(returnClass)
+      return response.readEntity(entityType)
+    else
+      throwForResponse(response)
+  }
 
+
+  def throwForResponse[T](response: Response): Nothing = {
     val e = response.getStatus match {
       case 400 => new BadRequestException(response)
       case 401 => new NotAuthorizedException(response)
@@ -70,8 +90,15 @@ trait JsonRestClient {
       case 415 => new NotSupportedException(response)
       case 500 => new InternalServerErrorException(response)
       case 503 => new ServiceUnavailableException(response)
-      case _ => new Exception("Trouble " + response.getStatus + "\n" + response.readEntity(classOf[String]))
+      case _ => new scala.Exception("Trouble " + response.getStatus + "\n" + response.readEntity(classOf[String]))
     }
     throw e;
+  }
+
+
+  // util
+
+  def urlEncode(s: String): String = {
+    URLEncoder.encode(s, "UTF-8")
   }
 }

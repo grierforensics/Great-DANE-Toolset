@@ -16,8 +16,9 @@ import org.bouncycastle.util.encoders.Base64
 
 import scala.beans.BeanProperty
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
+import ExecutionContext.Implicits.global
 
 ///////////////////////////// Workflow
 

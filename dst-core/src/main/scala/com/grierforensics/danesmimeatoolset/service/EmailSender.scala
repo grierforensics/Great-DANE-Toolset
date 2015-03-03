@@ -31,6 +31,7 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     val message: MimeMessage = createMessage(email)
     try {
       Transport.send(message)
+      logger.debug(s"email sent to=${email.to}")
     }
     catch {
       case e: Exception => throw new EmailSendFailedException(e)

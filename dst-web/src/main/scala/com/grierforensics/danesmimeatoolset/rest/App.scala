@@ -24,6 +24,7 @@ class App extends ResourceConfig with LazyLogging {
   register(new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
   register(new CatchAllExceptionMapper, ContractProvider.NO_PRIORITY)
   register(classOf[WorkflowResource])
+  register(classOf[ToolsetResource])
 
   val fetcher = EmailFetcher
   fetcher.asyncFetchAndDelete(handler, config.getLong("EmailFetcher.period"))

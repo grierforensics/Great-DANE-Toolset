@@ -37,20 +37,24 @@ class EmailFetcher(val pop3Host: String,
       val store = new POP3SSLStore(session, url)
       store.connect()
 
+      var handledCount = 0
       try {
         val folder: Folder = store.getFolder(folderName)
-        folder.open(Folder.READ_WRITE);
+        folder.open(Folder.READ_WRITE)
         val messages: Array[Message] = folder.getMessages
         for (message <- messages) {
-          if (handler(message))
-            message.setFlag(Flags.Flag.DELETED, true);
+          if (handler(message)) {
+            message.setFlag(Flags.Flag.DELETED, true)
+            handledCount += 1
+          }
         }
         folder.close(true)
       }
       finally {
         if (store.isConnected)
-          store.close();
+          store.close()
         fetchCount += 1
+        logger.debug(s"fetched email handledCount=$handledCount fetchCount=$fetchCount")
       }
     }
   }

@@ -18,4 +18,5 @@ lazy val core = (project in file("dst-core"))
   .dependsOn(bc % "compile->compile;test->test")
 
 lazy val web = (project in file("dst-web"))
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
+
