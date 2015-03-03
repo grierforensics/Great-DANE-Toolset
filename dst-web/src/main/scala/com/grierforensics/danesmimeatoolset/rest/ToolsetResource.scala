@@ -13,8 +13,8 @@ class ToolsetResource {
   val daneSmimeaService = DaneSmimeaService
 
   @GET
-  @Path("{email}")
-  def lookup(@PathParam("email") email: String): Seq[String] = {
+  @Path("{email}/text")
+  def lookupText(@PathParam("email") email: String): Seq[String] = {
     daneSmimeaService.fetchCerts(email).map(_.toString) match {
       case Nil => throw new WebApplicationException(Response.status(404).build())
       case nonempty => nonempty
@@ -22,11 +22,11 @@ class ToolsetResource {
   }
 
   @GET
-  @Path("{email}/{index}")
-  def lookup(@PathParam("email") email: String, @PathParam("index") index: Int): String = {
-    lookup(email) match {
+  @Path("{email}/text/{index}")
+  def lookupText(@PathParam("email") email: String, @PathParam("index") index: Int): String = {
+    lookupText(email) match {
       case results if results.isDefinedAt(index) => results(index)
-      case otherwise => throw new WebApplicationException(Response.status(404).build())
+      case otherwise => throw new WebApplicationException(Response.status(404).entity("DANE not found for email address").build())
     }
   }
 
@@ -44,7 +44,7 @@ class ToolsetResource {
   def lookupHex(@PathParam("email") email: String, @PathParam("index") index: Int): String = {
     lookupHex(email) match {
       case results if results.isDefinedAt(index) => results(index)
-      case otherwise => throw new WebApplicationException(Response.status(404).build())
+      case otherwise => throw new WebApplicationException(Response.status(404).entity("DANE not found for email address").build())
     }
   }
 
@@ -62,7 +62,7 @@ class ToolsetResource {
   def lookupDnsZoneLine(@PathParam("email") email: String, @PathParam("index") index: Int): String = {
     lookupDnsZoneLine(email) match {
       case results if results.isDefinedAt(index) => results(index)
-      case otherwise => throw new WebApplicationException(Response.status(404).build())
+      case otherwise => throw new WebApplicationException(Response.status(404).entity("DANE not found for email address").build())
     }
   }
 

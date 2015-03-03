@@ -2,6 +2,7 @@ package com.grierforensics.danesmimeatoolset.model
 
 import javax.mail.internet.InternetAddress
 
+import com.grierforensics.danesmimeatoolset.persist.WorkflowDao
 import com.grierforensics.danesmimeatoolset.service.EmailSender
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 

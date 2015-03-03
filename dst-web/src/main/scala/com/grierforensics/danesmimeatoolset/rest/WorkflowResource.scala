@@ -5,7 +5,8 @@ import javax.ws.rs._
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.{MediaType, Response}
 
-import com.grierforensics.danesmimeatoolset.model.{Workflow, WorkflowDao}
+import com.grierforensics.danesmimeatoolset.model.Workflow
+import com.grierforensics.danesmimeatoolset.persist.WorkflowDao
 
 import scala.beans.BeanProperty
 

@@ -13,10 +13,10 @@ class ToolsetResourceTests extends FunSuite with BeforeAndAfterAll with JsonRest
   val listStringType = new GenericType[List[String]]() {}
 
   test("REST toolset lookup cert") {
-    val certs = get(s"${server.url}/toolset/${urlEncode(emailWithDane)}", listStringType)
+    val certs = get(s"${server.url}/toolset/${urlEncode(emailWithDane)}/text", listStringType)
     intercept[NotFoundException](get(s"${server.url}/toolset/${urlEncode(emailWithoutDane)}"))
 
-    val cert = get(s"${server.url}/toolset/${urlEncode(emailWithDane)}/0", classOf[String])
+    val cert = get(s"${server.url}/toolset/${urlEncode(emailWithDane)}/text/0", classOf[String])
     intercept[NotFoundException](get(s"${server.url}/toolset/${urlEncode(emailWithDane)}/10", classOf[String]))
   }
 

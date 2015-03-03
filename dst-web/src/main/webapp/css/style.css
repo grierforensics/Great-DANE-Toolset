@@ -192,9 +192,16 @@ td { padding: 0; }
 \* ================================================================ */
 .content { margin: 0 20px 20px; background: #d8d8d8; float: left; width: 669px; min-height: 434px; }
 .faq h1,.faq h2,.faq h3 {margin-top: 20px; margin-bottom: 10px}
-.faq p {font-size: 17px;}
+.faq p {font-size: 17px;margin-top: 15px}
+.faq pre {font-size: 17px; padding: 6px 10px; background-color: #fafafa; border: 1px solid #ddd; overflow: auto;
+    white-space: pre-wrap;       /* CSS 3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;}
 .statuspage .section {float:left}
 .statuspage {margin-top: 20px}
+.shell {padding-bottom: 20px}
 
 /* ================================================================ *\
 	#Form

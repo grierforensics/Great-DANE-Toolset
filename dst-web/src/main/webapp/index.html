@@ -29,15 +29,9 @@
 				<!--<li>-->
 					<!--<a href="#">About</a>-->
 				<!--</li>-->
-				
-				<li>
-					<a href="/#/start">New Test</a>
-				</li>
-
-				<li>
-					<a href="/#/faq">Faq</a>
-				</li>
-				
+                <li><a href="/#/start">New Test</a> </li>
+                <li> <a href="/#/faq">Faq</a> </li>
+                <li> <a href="/#/api">API</a> </li>
 				<!--<li>-->
 					<!--<a href="#">Documentation</a>-->
 				<!--</li>-->
@@ -58,8 +52,13 @@
 	</nav><!-- /.nav -->
 
 	<div class="main">
-		<div class="shell">
-
+        <div class="shell">
+            <div class="warning">
+                DANE SMIMEA is currently an IETF draft. This toolset is based on the version at
+                <a href="https://tools.ietf.org/html/draft-ietf-dane-smime-07" target="_blank">https://tools.ietf.org/html/draft-ietf-dane-smime-07</a>.<br/>
+                IANA has not yet assigned a RR Type for DANE SMIMEA record. This toolset uses the private type 65500.
+                Until IANA assigns a type, please publish your DANE SMIMEA records under TYPE65500 for compatibility.
+            </div>
 			<div ng-view></div>
 
 		</div><!-- /.shell -->
@@ -67,7 +66,7 @@
 
 	<footer class="footer">
 		<div class="shell">
-			<p class="copyright">&copy; 2015 Dane Smimea</p><!-- /.copyright -->
+			<p class="copyright">&copy; 2014-2015 Grier Forensics</p><!-- /.copyright -->
 
 			<nav class="footer-nav">
 				<ul>
@@ -75,13 +74,9 @@
 					<!--<a href="#">About</a>-->
 					<!--</li>-->
 
-					<li>
-						<a href="/#/start">New Test</a>
-					</li>
-
-					<li>
-						<a href="/#/faq">Faq</a>
-					</li>
+					<li><a href="/#/start">New Test</a> </li>
+					<li> <a href="/#/faq">Faq</a> </li>
+					<li> <a href="/#/api">API</a> </li>
 
 					<!--<li>-->
 					<!--<a href="#">Documentation</a>-->

@@ -8,6 +8,7 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.ext.{ContextResolver, ExceptionMapper, Provider}
 
 import com.grierforensics.danesmimeatoolset.model._
+import com.grierforensics.danesmimeatoolset.persist.WorkflowDao
 import com.grierforensics.danesmimeatoolset.service.EmailFetcher
 import com.grierforensics.danesmimeatoolset.service.GensonConfig.genson
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
