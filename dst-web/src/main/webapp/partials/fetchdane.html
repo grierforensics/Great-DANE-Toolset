@@ -1,0 +1,30 @@
+<div class="contentsection">
+
+    <div ng-include="'partials/sidebar.html'"></div>
+
+    <div class="content section-testing">
+        <h3 class="section-title">Fetching DANE for {{email}}</h3>
+
+        <div ng-hide="certs" class="section-notice">Fetching your info...</div>
+        <div ng-show="certs">
+
+            <div class="section-notice">Found {{certs.length}} DANE record<span ng-show="certs.length>1">s</span>.</div>
+
+            <ul class="section-boxes">
+                <li ng-repeat="cert in certs">
+                    <h3>Cert {{$index + 1}}:  
+                        <a href="{{cert.hexUrl}}" class="btn">Cert Data</a>
+                        <a href="{{cert.daneSmimeaUrl}}" class="btn">DANE SMIMEA Record</a>
+                    </h3>
+
+                    <div class="codeBox"><code>{{cert.text}}</code></div>
+                </li>
+            </ul>
+        </div>
+
+        <div ng-show="notFound" class="section-notice">Sorry, your email does not have DANE information associated with
+            it.
+        </div>
+        <div ng-show="error" class="section-notice">Sorry, there was an error when fetching your DANE information.</div>
+    </div>
+</div>

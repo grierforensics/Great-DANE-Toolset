@@ -1,0 +1,48 @@
+<div class="contentsection">
+
+    <div ng-include="'partials/sidebar.html'"></div>
+
+    <div ng-hide="result" class="content section-testing">
+        <h3 class="section-title">Create a DANE SMIMEA record that you can add to your DNS:</h3>
+
+        <div ng-show="error" class="section-notice">Sorry, there was an error when creating your DANE information.<br/>{{error}}</div>
+
+        <div class="form-email-test">
+            <form>
+                <div class="form-body">
+                    <div class="form-row">
+                        <label for="field-email" class="form-label">Email</label>
+
+                        <div class="form-controls">
+                            <input type="email" ng-model="email" class="field" name="field-email" id="field-email"
+                                  placeholder="Enter your email address here">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label for="field-certHex" class="form-label">Certificate Hexidecimal Data</label>
+
+                        <div class="form-controls">
+                            <textarea ng-model="certHex" class="field" name="field-certHex" id="field-certHex"
+                                      placeholder="Paste your certificate hexidecimal data here.">{{certHex}}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <input type="submit" ng-click="createDane()" value="Create" class="form-btn">
+                    <!--<input ng-click="reset()" value="Reset" class="form-btn">-->
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div ng-show="result" class="content section-testing">
+        <h3 class="section-title">DANE SMIMEA record for <br/>{{email}}</h3>
+
+        <div class="codeBox"><code>{{result}}</code></div>
+
+        <!--<input ng-click="reset()" value="Reset" class="form-btn">-->
+    </div>
+
+
+</div>

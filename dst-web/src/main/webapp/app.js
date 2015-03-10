@@ -20,14 +20,14 @@ app.config(['$routeProvider',
                 controller: 'StatusCtrl'
             }).
             when('/dane', {
-                templateUrl: 'partials/fetchDaneForm.html'
+                templateUrl: 'partials/fetchdaneform.html'
             }).
             when('/dane/:email', {
-                templateUrl: 'partials/fetchDane.html',
+                templateUrl: 'partials/fetchdane.html',
                 controller: 'FetchDaneCtrl'
             }).
             when('/createDane', {
-                templateUrl: 'partials/createDane.html',
+                templateUrl: 'partials/createdane.html',
                 controller: 'CreateDaneCtrl'
             }).
             otherwise({

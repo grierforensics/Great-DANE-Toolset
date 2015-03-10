@@ -1,0 +1,27 @@
+<div class="contentsection">
+
+    <div ng-include="'partials/sidebar.html'"></div>
+
+    <div class="content section-testing">
+        <h3 class="section-title">Fetch DANE SMIMEA records from DNS for a given email address:</h3>
+
+        <div class="form-email-test">
+            <form>
+                <div class="form-body">
+                    <div class="form-row">
+                        <label for="field-email" class="form-label">Email</label>
+
+                        <div class="form-controls">
+                            <input type="email" ng-model="email" class="field" name="field-email" id="field-email" value="{{email}}" placeholder="Enter your email address here">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <input type="submit" onclick="location.href='/#/dane/'+encodeURI($('#field-email').val())" value="Fetch" class="form-btn">
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
