@@ -1,7 +1,7 @@
 package com.grierforensics.danesmimeatoolset.rest
 
-import javax.ws.rs.NotFoundException
 import javax.ws.rs.core.GenericType
+import javax.ws.rs.{BadRequestException, NotFoundException}
 
 import com.grierforensics.danesmimeatoolset.util.DstTestValues._
 import org.scalatest._;
@@ -41,8 +41,17 @@ class ToolsetResourceTests extends FunSuite with BeforeAndAfterAll with JsonRest
 
 
   test("REST toolset create dnsZoneLine") {
-    val dnsZoneLine = post(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", emailWithDaneCertHex, classOf[String])
-    assert(dnsZoneLine == emailWithDanePublishedZoneLine)
+    val dnsZoneLine1 = postForMediaType(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", emailWithDaneCertHex)
+    assert(dnsZoneLine1 == emailWithDanePublishedZoneLine)
+
+    val dnsZoneLine2 = post(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", emailWithDaneCertHex, classOf[String])
+    assert(dnsZoneLine2 == emailWithDanePublishedZoneLine)
+  }
+
+  test("REST toolset create dnsZoneLine with bad cert") {
+    intercept[BadRequestException](
+      post(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", badCertHex, classOf[String])
+    )
   }
 }
 

@@ -77,7 +77,7 @@ td { padding: 0; }
 	#Containers
 \* ================================================================ */
 .shell { max-width: 1024px; margin: 0 auto; box-sizing: border-box; }
-.main { overflow: hidden; border-bottom: 1px solid #ccc; }
+.main { overflow: hidden; border-bottom: 1px solid #ccc; min-height: 800px;}
 
 /* ================================================================ *\
 	#Links
@@ -104,6 +104,7 @@ td { padding: 0; }
 	#Icons
 \* ================================================================ */
 .ico { background: url(images/sprite.png) no-repeat; display: inline-block; vertical-align: middle; }
+.ico-error-small { width: 37px; height: 36px; background-position: -107px 0; margin: 3px 9px 0px; float: left; }
 .ico-error-small { width: 37px; height: 36px; background-position: -107px 0; margin: 3px 9px 0px; float: left; }
 .ico-error { width: 59px; height: 59px; margin:7px; background-position: -148px 0; }
 .ico-process { width: 73px; height: 73px; background-position: -211px 0; }
@@ -160,7 +161,7 @@ td { padding: 0; }
 .section-results .section-boxes { margin: 0 0 44px; }
 .section-errors .section-box,
 .section-results .section-box { margin-bottom: 15px; }
-.section-title { font-size: 28px; font-weight: bold; text-align: center; }
+.section-title { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 25px }
 .section-title span { color: #ff931f; font-family: 'Helvetica Oblique', Arial, sans-serif; }
 .section-box-icon,
 .section-box-content { float: left; box-sizing: border-box; height: 110px; }
@@ -187,10 +188,12 @@ td { padding: 0; }
 .section-box-certificate:after { background: url(images/sprite.png) no-repeat -3px 0; width: 20px; height: 20px; content: ''; position: absolute; top: -2px; left: -2px; }
 .section-box-certificate code { font-size: 12px; line-height: 1; }
 
+div .warning {color:darkred; margin-bottom: 10px}
+
 /* ================================================================ *\
 	#Content
 \* ================================================================ */
-.content { margin: 0 20px 20px; background: #d8d8d8; float: left; width: 669px; min-height: 434px; }
+.content { margin: 0; background: #d8d8d8; float: left; width: 640px; min-height: 300px; }
 .faq h1,.faq h2,.faq h3 {margin-top: 20px; margin-bottom: 10px}
 .faq p {font-size: 17px;margin-top: 15px}
 .faq pre {font-size: 17px; padding: 6px 10px; background-color: #fafafa; border: 1px solid #ddd; overflow: auto;
@@ -203,23 +206,31 @@ td { padding: 0; }
 .statuspage {margin-top: 20px}
 .shell {padding-bottom: 20px}
 
+.codeBox {font-size: 12px; padding: 6px 10px; background-color: #fafafa; border: 1px solid #ddd; overflow: auto;
+    white-space: pre-wrap;       /* CSS 3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;}
+
 /* ================================================================ *\
 	#Form
 \* ================================================================ */
 .form-row,
-.form-controls { margin-top: 42px; }
+.form-controls { margin-top: 10px; }
 .form-actions { margin-top: 54px; text-align: center; }
 .form-row { text-align: center; }
-.form-label { font-weight: bold; font-size: 39px; line-height: 1.18; }
+.form-label { font-weight: bold; font-size: 20px; }
 .form-label span { color: #ff931f; text-transform: uppercase; }
 .field { border: 2px solid #767674; border-radius: 8px; box-shadow: inset 0px 0px 10px 1px rgba(0,0,0,0.5); width: 624px; box-sizing: border-box; height: 82px; color: #666; font-weight: 300; font-size: 32px; padding: 0 20px; }
+textarea.field {height: 250px; font-size: 18px;}
 .form-btn { width: 352px; height: 92px; box-sizing: border-box; border-radius: 4px; border: 0; background: #ff931f; text-transform: uppercase; color: #fff; font-size: 48px; font-weight: bold; }
 .form-btn:hover { opacity: .8; }
 
 /* ================================================================ *\
 	#Sidebar
 \* ================================================================ */
-.sidebar { float: right; border-left: 10px solid #eee; width: 314px; box-sizing: border-box; padding: 0 34px 0 17px; }
+.sidebar { float: right; border-left: 10px solid #eee; width: 280px; box-sizing: border-box; padding: 0 0 0 17px; }
 
 .widgets { list-style: none outside none; }
 .widget { min-height: 128px; }

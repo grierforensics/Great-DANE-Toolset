@@ -3,9 +3,9 @@ package com.grierforensics.danesmimeatoolset.rest
 import javax.ws.rs._
 import javax.ws.rs.core.{MediaType, Response}
 
-import com.grierforensics.danesmimeatoolset.service.DaneSmimeaService
+import com.grierforensics.danesmimeatoolset.service.{BadCertificateException, DaneSmimeaService, GensonConfig}
 import org.bouncycastle.cert.dane.DANEEntry
-import org.bouncycastle.util.encoders.Hex
+import org.bouncycastle.util.encoders.{DecoderException, Hex}
 
 @Path("/toolset")
 @Produces(Array(MediaType.APPLICATION_JSON))
@@ -68,10 +68,26 @@ class ToolsetResource {
 
   @POST
   @Path("{email}/dnsZoneLineForCert")
+  @Consumes(Array(MediaType.TEXT_PLAIN))
+  @Produces(Array(MediaType.TEXT_PLAIN))
+  def createDnsZoneLineAsText(@PathParam("email") email: String, certHex: String): String = {
+    try {
+      val de2: DANEEntry = daneSmimeaService.createDANEEntry(email, Hex.decode(certHex))
+      daneSmimeaService.getDnsZoneLineForDaneEntry(de2)
+    }
+    catch {
+      case e@(_: BadCertificateException | _: DecoderException) => throw new WebApplicationException(Response.status(400).entity(e.getMessage).build())
+    }
+  }
+
+  @POST
+  @Path("{email}/dnsZoneLineForCert")
   @Consumes(Array(MediaType.APPLICATION_JSON))
-  def createDnsZoneLine(@PathParam("email") email: String, certHex: String): String = {
-    val de2: DANEEntry = daneSmimeaService.createDANEEntry(email, Hex.decode(certHex))
-    daneSmimeaService.getDnsZoneLineForDaneEntry(de2)
+  @Produces(Array(MediaType.APPLICATION_JSON))
+  def createDnsZoneLineAsJson(@PathParam("email") email: String, certHex: String): String = {
+    GensonConfig.genson.serialize(createDnsZoneLineAsText(email, certHex))
+    //note: serializing here, because strings are assumed to be already serialized by Jersey and therefore aren't
+    //      converted to JSON automatically.
   }
 }
 

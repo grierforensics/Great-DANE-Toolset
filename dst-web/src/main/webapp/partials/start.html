@@ -1,4 +1,6 @@
-<div class="intro">
+<div class="contentsection">
+
+    <div class="intro">
     <div class="shell">
         <h3 class="intro-title">DANE SMIMEA allows you to have a private, encrypted, secure conversation <br>with anyone in the world using standard email.</h3><!-- /.intro-title -->
 
@@ -8,15 +10,19 @@
     </div><!-- /.shell -->
 </div><!-- /.intro -->
 
-<div class="content">
+<div ng-include="'partials/sidebar.html'"></div>
+
+<div class="content section-testing">
+    <h3 class="section-title">Test your email for <span>Dane Smimea</span> support:</h3>
+
     <div class="form-email-test">
         <form>
             <div class="form-body">
                 <div class="form-row">
-                    <label for="field-email" class="form-label">Test your email for <br><span>Dane Smimea</span> support:</label>
+                    <label for="field-email" class="form-label">Email</label>
 
                     <div class="form-controls">
-                        <input type="email" ng-model="email" class="field" name="field-email" id="field-email" value="{{email}}" placeholder="Enter your email address here">
+                        <input type="email" ng-model="email" class="field" name="field-email" id="field-email" placeholder="Enter your email address here">
                     </div><!-- /.form-controls -->
                 </div><!-- /.form-row -->
             </div><!-- /.form-body -->
@@ -28,4 +34,6 @@
     </div><!-- /.form-email-test -->
 </div><!-- /.content -->
 
-<div ng-include="'partials/sidebar.html'"></div>
+</div>
+
+

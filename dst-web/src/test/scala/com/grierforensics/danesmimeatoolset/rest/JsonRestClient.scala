@@ -1,10 +1,15 @@
 package com.grierforensics.danesmimeatoolset.rest
 
+import java.io.InputStream
 import java.net.URLEncoder
 import javax.ws.rs._
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.Response.Status.Family
 import javax.ws.rs.core.{Form, GenericType, MediaType, Response}
+
+import com.grierforensics.danesmimeatoolset.service.GensonConfig
+
+import scala.io.{Codec, Source}
 
 
 /**
@@ -39,6 +44,20 @@ trait JsonRestClient {
 
   def post[T](url: String, any: Any, entityType: GenericType[T]): T = handleResponse(postToResponse(url, any), entityType)
 
+  def postForMediaType(url: String, any: Any,
+                       requestMediaType: String = MediaType.TEXT_PLAIN,
+                       responseMediaType: String = MediaType.TEXT_PLAIN): String = {
+    val entity: Entity[Any] = Entity.entity(any, requestMediaType)
+    val response: Response = App.newClient.target(url).request(responseMediaType).post(entity)
+
+    if (response.getStatusInfo.getFamily != Family.SUCCESSFUL)
+      throwForResponse(response)
+
+    response.getEntity() match {
+      case is: InputStream => Source.fromInputStream(is)(Codec.UTF8).mkString
+      case otherwise => null
+    }
+  }
 
   //post form
 
@@ -64,17 +83,27 @@ trait JsonRestClient {
   //response handling
 
   def handleResponse[T](response: Response, entityType: Class[T]): T = {
-    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL)
-      return response.readEntity(entityType)
-    else
+    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL) {
+      val result: T = response.readEntity(entityType)
+      //workaround because Jersey skips deserializing string results (JSON is already a string)
+      result match {
+        case s: String if entityType == classOf[String] => GensonConfig.genson.deserialize(s, entityType)
+        case otherwise => otherwise
+      }
+    } else
       throwForResponse(response)
   }
 
 
   def handleResponse[T](response: Response, entityType: GenericType[T]): T = {
-    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL)
-      return response.readEntity(entityType)
-    else
+    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL) {
+      val result: T = response.readEntity(entityType)
+      //workaround because Jersey skips deserializing string results (JSON is already a string)
+      result match {
+        case s: String if entityType.getRawType == classOf[String] => GensonConfig.genson.deserialize(s, classOf[String]).asInstanceOf[T]
+        case otherwise => otherwise
+      }
+    } else
       throwForResponse(response)
   }
 
