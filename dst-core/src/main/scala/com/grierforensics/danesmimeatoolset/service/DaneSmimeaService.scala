@@ -25,8 +25,9 @@ import org.bouncycastle.cms.{KeyTransRecipientId, RecipientId, SignerInfoGenerat
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.mail.smime.{SMIMESigned, SMIMEToolkit}
 import org.bouncycastle.openssl.jcajce.JcaPKIXIdentityBuilder
+import org.bouncycastle.operator._
+import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder
 import org.bouncycastle.operator.jcajce.{JcaContentSignerBuilder, JcaDigestCalculatorProviderBuilder}
-import org.bouncycastle.operator.{ContentSigner, DigestCalculator, DigestCalculatorProvider, OutputEncryptor}
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.bouncycastle.util.encoders.Hex
 
@@ -118,8 +119,9 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
 
   def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
     val holder: X509CertificateHolder = new X509CertificateHolder(certBytes)
-    val entry: DANEEntry = daneEntryFactory.createEntry(email, holder)
-    entry
+    validateCert(holder)
+
+   daneEntryFactory.createEntry(email, holder)
   }
 
 
@@ -129,7 +131,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
     s"${de.getDomainName}. 299 IN TYPE$daneType \\# ${encoded.length} ${hex}"
   }
 
-  
+
   def loadIdentity(keyFileName: String, certFileName: String): JcaPKIXIdentity = {
     val keyFile: File = new File(keyFileName)
     if (!keyFile.canRead) {
@@ -282,8 +284,17 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
+  def validateCert(holder: X509CertificateHolder): Unit = {
+    val contentVerifierProvider = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder()).build(holder);
+    if (!holder.isSignatureValid(contentVerifierProvider))
+      throw new BadCertificateException("Certificate signature is bad.")
+//    if (!holder.isValidOn(new Date))  //todo: uncomment... this is commented out for now because our major test email has an expired cert.
+//      throw new BadCertificateException("Certificate expired.")
+  }
+
+
   /**
-   * Validates an athority based cert path.
+   * Validates an authority based cert path.
    */
   private def validateCertPath(certHolder: X509CertificateHolder): Boolean = {
     throw new NotImplementedError("Has not been tested yet and shouldn't be called.  (copied from demo code)")
@@ -374,6 +385,11 @@ class ContentPart(val mimeType: String, val content: AnyRef) {
  * General Exception for decryption problems.
  */
 class DecryptionException(message: String) extends Exception(message)
+
+/**
+ * General Exception for certificate problems, such as encoding, signing, or expiring.
+ */
+class BadCertificateException(message: String) extends Exception(message)
 
 /**
  * Singleton DaneSmimeaService based on config dns

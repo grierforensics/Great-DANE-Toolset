@@ -10,6 +10,7 @@ import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.model.Workflow._
 import com.grierforensics.danesmimeatoolset.service.{DaneSmimeaService, EmailSendFailedException, EmailSender, MessageDetails}
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
+import com.grierforensics.danesmimeatoolset.util.IdGenerator
 import com.typesafe.scalalogging.LazyLogging
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.util.encoders.Base64
@@ -204,7 +205,7 @@ object Workflow {
   val dstCertBase64Str = Base64.toBase64String(new X509CertificateHolder(dstIdentity.getX509Certificate.getEncoded).getEncoded) //todo: fix this needs testing
 
   def apply(email: String) = {
-    new Workflow(nextId, email)
+    new Workflow(IdGenerator.nextId, email)
   }
 
   def parseIdInSubject(subject: String): Option[String] = {
@@ -214,19 +215,6 @@ object Workflow {
       case None => None
     }
   }
-
-  /**
-   * Gets a epoch-ish id with a random tail
-   */
-  def nextId: String = {
-    synchronized {
-      lastId = Math.max(lastId + 1, System.currentTimeMillis())
-      "%d%d3".format(lastId, Random.nextInt(1000))
-    }
-  }
-
-  private var lastId: Long = 0
-
 }
 
 

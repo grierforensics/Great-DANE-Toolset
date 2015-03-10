@@ -3,6 +3,7 @@ package com.grierforensics.danesmimeatoolset.model
 import java.util.Date
 
 import com.grierforensics.danesmimeatoolset.service.MessageDetails
+import com.grierforensics.danesmimeatoolset.util.IdGenerator
 
 import scala.beans.BeanProperty
 
@@ -10,6 +11,8 @@ import scala.beans.BeanProperty
 class Event(@BeanProperty val eventType: EventType,
             @BeanProperty val message: String,
             @BeanProperty val date: Date = new Date) {
+
+  @BeanProperty val id: String = IdGenerator.nextId
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Event]
 
