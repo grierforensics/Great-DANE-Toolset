@@ -8,6 +8,9 @@ import com.grierforensics.danesmimeatoolset.util.IdGenerator
 import scala.beans.BeanProperty
 
 
+/** Represents a generic Workflow event.
+  *
+  * Properties are marked as BeanProperties to enable JSON serialization. */
 class Event(@BeanProperty val eventType: EventType,
             @BeanProperty val message: String,
             @BeanProperty val date: Date = new Date) {
@@ -32,6 +35,9 @@ class Event(@BeanProperty val eventType: EventType,
 }
 
 
+/** Represents an event for when an email is received with MessageDetails
+  *
+  * Properties are marked as BeanProperties to enable JSON serialization. */
 class EmailReceivedEvent(eventType: EventType,
                          message: String,
                          @BeanProperty val details: MessageDetails,

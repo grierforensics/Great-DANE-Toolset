@@ -6,7 +6,8 @@ import com.grierforensics.danesmimeatoolset.model.Workflow
 import com.grierforensics.danesmimeatoolset.service.GensonConfig._
 import org.scalatest._
 
-
+/** Test workflow functionality.
+  * todo: fill in many more tests...*/
 class WorkflowResourceTests extends FunSuite with JsonRestClient {
 
   val server = TestServer.instance
@@ -15,15 +16,6 @@ class WorkflowResourceTests extends FunSuite with JsonRestClient {
     val res = get(s"${server.url}")
     //res.lines.take(5) foreach println
     assert(res.startsWith("<!DOCTYPE html>"))
-  }
-
-  test("GET /workflow/echo/blah") {
-    val r1 = get(s"${server.url}/workflow/echo/blah1", classOf[Echo])
-    val r2 = get(s"${server.url}/workflow/echo/blah2", classOf[Echo])
-    //println(res)
-    assert(r1.echo == "blah1")
-    assert(r2.echo == "blah2")
-    assert(r2.count - r1.count == 1)
   }
 
   test("REST Workflow") {

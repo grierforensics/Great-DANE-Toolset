@@ -41,9 +41,6 @@ class ToolsetResourceTests extends FunSuite with BeforeAndAfterAll with JsonRest
 
 
   test("REST toolset create dnsZoneLine") {
-    val dnsZoneLine1 = postForMediaType(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", emailWithDaneCertHex)
-    assert(dnsZoneLine1 == emailWithDanePublishedZoneLine)
-
     val dnsZoneLine2 = post(s"${server.url}/toolset/${urlEncode(emailWithDane)}/dnsZoneLineForCert", emailWithDaneCertHex, classOf[String])
     assert(dnsZoneLine2 == emailWithDanePublishedZoneLine)
   }

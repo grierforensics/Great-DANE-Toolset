@@ -4,11 +4,10 @@ import scala.collection.mutable
 import scala.util.Random
 
 
+/** Generates an epoch-ish id with a random tail and a string prefix.
+  * Epochishness degrades if an average of more than one id is generated per ms. */
 class IdGenerator(val name: String = "") {
-  /**
-   * Gets a epoch-ish id with a random tail.
-   * Epochishness degrades if an average of more than one id is generated per ms.
-   */
+
   def nextId: String = {
     synchronized {
       lastId = Math.max(lastId + 1, System.currentTimeMillis())
@@ -20,6 +19,10 @@ class IdGenerator(val name: String = "") {
 }
 
 
+/** Factory'ish singleton for IdGenerator's.
+  *
+  * A map of idGenerators is stored, one for each name prefix.  If a new name prefix is encountered, then a new
+  * IdGenerator will be created. */
 object IdGenerator {
   val idGenerators = new mutable.HashMap[String, IdGenerator]
 

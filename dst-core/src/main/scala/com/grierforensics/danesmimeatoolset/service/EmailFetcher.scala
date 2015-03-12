@@ -9,22 +9,32 @@ import com.sun.mail.pop3.POP3SSLStore
 import com.typesafe.scalalogging.LazyLogging
 
 
+/**
+ * Class to fetch email either once, or schedule repeated fetches.
+ */
 class EmailFetcher(val pop3Host: String,
                    val username: String,
                    val password: String,
-                   val folderName: String = "INBOX",
-                   val personal: String = "DANE SMIMEA Toolset") extends LazyLogging {
+                   val folderName: String = "INBOX") extends LazyLogging {
+
+  val pop3Port: Int = 995
+
   val fetchLock = new Object
   val asyncLock = new Object
   var asyncTimer: Timer = null
   @volatile var fetchCount = 0L
 
-  val WAIT_POLLING_PERIOD: Long = 100
+  private val fetchWatchLoopPeriodMs: Long = 100
 
+
+  /**
+   * Fetches mail once synchronously.
+   * @param handler function to handle each message.  If returns true, then the message is considered handled and will
+   *                be deleted.  If returns false, the message will not be deleted.
+   */
   def fetchAndDelete(handler: Message => Boolean) {
     fetchLock.synchronized {
       logger.debug("fetching email")
-      val pop3Port: Int = 995
 
       val pop3Props = new Properties()
       pop3Props.setProperty("mail.pop3.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
@@ -61,6 +71,9 @@ class EmailFetcher(val pop3Host: String,
 
   /**
    * Waits for the given number of email fetches or the timeout or for the asyncIsFetching == false
+   * This is mainly used for testing, so that a mail can be sent and then the test can use this to block until the
+   * fetcher has gone to the server.
+   *
    * @param fetches number of fetches to wait for.  Default is 1
    * @param timeout millis before timeout.  0 or less means no timeout.  Default is -1
    */
@@ -69,49 +82,70 @@ class EmailFetcher(val pop3Host: String,
     val until: Long = if (timeout > 0) System.currentTimeMillis() + timeout else Long.MaxValue
     var now: Long = System.currentTimeMillis()
     while (asyncIsFetching && fetchCount < targetCount && now < until) {
-      Thread.sleep(Math.min(WAIT_POLLING_PERIOD, until - now))
+      Thread.sleep(Math.min(fetchWatchLoopPeriodMs, until - now))
       now = System.currentTimeMillis()
     }
   }
 
 
-  def asyncFetchAndDelete(handler: Message => Boolean, period: Long = -1): Unit = {
+  /**
+   * Fetches mail once asynchronously.
+   * @param handler function to handle each message.  If returns true, then the message is considered handled and will
+   *                be deleted.  If returns false, the message will not be deleted.
+   */
+  def asyncFetchAndDelete(handler: Message => Boolean): Unit = {
     asyncLock.synchronized {
       asyncStop()
       asyncTimer = new Timer(true)
-
-      if (period > 0)
-        asyncTimer.schedule(new TimerTask {
-          override def run(): Unit = {
-            try {
-              fetchAndDelete(handler)
-            }
-            catch {
-              case e: Exception => logger.warn("Email fetch failed.", e)
-            }
+      asyncTimer.schedule(new TimerTask {
+        override def run(): Unit = {
+          try {
+            fetchAndDelete(handler)
           }
-        }, 0, period)
-      else
-        asyncTimer.schedule(new TimerTask {
-          override def run(): Unit = {
-            try {
-              fetchAndDelete(handler)
-            }
-            catch {
-              case e: Exception => logger.warn("Email fetch failed.", e)
-            }
-            asyncStop() //mark this as stopped because no periodic tasks are coming
+          catch {
+            case e: Exception => logger.warn("Email fetch failed.", e)
           }
-        }, 0)
+          asyncStop() //mark this as stopped because no periodic tasks are coming
+        }
+      }, 0)
     }
   }
 
+  /**
+   * Fetches mail periodically asynchronously.
+   * @param handler function to handle each message.  If returns true, then the message is considered handled and will
+   *                be deleted.  If returns false, the message will not be deleted.
+   */
+  def asyncFetchAndDelete(handler: Message => Boolean, period: Long): Unit = {
+    asyncLock.synchronized {
+      asyncStop()
+      asyncTimer = new Timer(true)
+      asyncTimer.schedule(new TimerTask {
+        override def run(): Unit = {
+          try {
+            fetchAndDelete(handler)
+          }
+          catch {
+            case e: Exception => logger.warn("Email fetch failed.", e)
+          }
+        }
+      }, 0, period)
+    }
+  }
+
+
+  /**
+   * Determines whether an asynchronous email fetch is running or scheduled.
+   */
   def asyncIsFetching: Boolean = {
     asyncLock.synchronized {
       asyncTimer != null
     }
   }
 
+  /**
+   * Stops scheduled asynchronous email fetches.
+   */
   def asyncStop(): Unit = {
     asyncLock.synchronized {
       if (asyncTimer != null) {
@@ -120,16 +154,16 @@ class EmailFetcher(val pop3Host: String,
       }
     }
   }
-
-  def address: InternetAddress = new InternetAddress(username, personal)
 }
 
 
+/**
+ * Singleton setup using config.
+ */
 object EmailFetcher extends EmailFetcher(
   config.getString("EmailFetcher.host"),
   config.getString("EmailFetcher.username"),
   config.getString("EmailFetcher.password"),
-  "INBOX",
-  "DANE SMIMEA Toolset"
+  "INBOX"
 )
 

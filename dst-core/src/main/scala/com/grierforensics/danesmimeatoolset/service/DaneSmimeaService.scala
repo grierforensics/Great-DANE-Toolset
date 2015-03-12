@@ -10,7 +10,6 @@ import javax.mail.internet.{InternetAddress, MimeBodyPart, MimeMultipart}
 import javax.mail.{Address, Message, Part}
 
 import com.grierforensics.danesmimeatoolset.model.Email
-import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 import com.typesafe.scalalogging.LazyLogging
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -36,11 +35,25 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 
+/**
+ * Service providing a collection of DANE and SMIMEA functions around signing, encryption, dane fetching, and dane creation.
+ *
+ * todo: Break this class apart.
+ * This class was orriginally organized arround Bouncy Castle SMIMEToolkit functions.  Now there are some distinct
+ * subsections of functionality.  However, there are interdependencies, so I'm waiting until a DI solution is in
+ * place before breaking this up.
+ * Until then
+ *
+ * @param dnsServer
+ */
 class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   BouncyCastleProviderSetup.init()
 
   val providerName: String = "BC"
   val daneType: String = "65500"
+  //this correlates to a hardcoded private value in BC
+  val algorithmName: String = "SHA1withRSA"
+
   val digestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(providerName).build
   val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
   val daneEntryFactory = new DANEEntryFactory(sha224Calculator)
@@ -51,36 +64,30 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   val toolkit: SMIMEToolkit = new SMIMEToolkit(digestCalculatorProvider)
 
 
-  def signAndEncrypt(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
-    encrypt(sign(email, fromIdentity))
-  }
+  // // // // // // // // // // Dane Methods
 
-
-  def sign(email: Email): Email = sign(email, generateIdentity(email.from))
-
-
-  def sign(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
-
-    val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(providerName).build("SHA1withRSA", fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
-    val signedMultipart: MimeMultipart = toolkit.sign(email.bodyPart, signerInfo)
-
-    Email(email.from, email.to, email.subject, signedMultipart)
-  }
-
-
-  def fetchCert(emailAddress: String): Option[X509Certificate] = {
+  /**
+   * Fetches the first DANE cert found on DNS for the given email address.
+   */
+  def fetchDaneCert(emailAddress: String): Option[X509Certificate] = {
     fetchDaneEntries(emailAddress) match {
       case Nil => None
-      case daneEntries => Option(getCert(daneEntries.head))
+      case daneEntries => Option(getCertFromDANEEntry(daneEntries.head))
     }
   }
 
 
-  def fetchCerts(emailAddress: String): Seq[X509Certificate] = {
-    fetchDaneEntries(emailAddress).map(getCert(_))
+  /**
+   * Fetches the all DANE certs found on DNS for the given email address.
+   */
+  def fetchDaneCerts(emailAddress: String): Seq[X509Certificate] = {
+    fetchDaneEntries(emailAddress).map(getCertFromDANEEntry(_))
   }
 
 
+  /**
+   * Fetches the all DANEEntry's found on DNS for the given email address.
+   */
   def fetchDaneEntries(emailAddress: String): Seq[DANEEntry] = {
     try {
       daneEntryFetcher.fetch(emailAddress)
@@ -91,14 +98,70 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def getCert(daneEntry: DANEEntry): X509Certificate = {
+  /**
+   * Gets certificate data from DANEEntry and converts it to a X509Certificate
+   */
+  def getCertFromDANEEntry(daneEntry: DANEEntry): X509Certificate = {
     certConverter.getCertificate(daneEntry.getCertificate)
   }
 
 
-  def encrypt(email: Email): Email = encrypt(email, fetchCert(email.to.getAddress).orNull)
+  /**
+   * Creates a DANEEntry from an email and a cert. 
+   * The cert must be valid (signed and not expired).
+   * No relation between the email and cert is checked.
+   */
+  def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
+    daneEntryFactory.createEntry(email, validateCert(cert.getEncoded))
+  }
 
 
+  /**
+   * Creates a DANEEntry from an email and a cert. 
+   * The cert must be valid (signed and not expired).
+   * No relation between the email and cert is checked.
+   */
+  def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
+    daneEntryFactory.createEntry(email, validateCert(certBytes))
+  }
+
+
+  /**
+   * Creates a text line suitable for a DNS zone file based on the given DANEEntry.
+   */
+  def getDnsZoneLineForDaneEntry(de: DANEEntry): String = {
+    val encoded: Array[Byte] = de.getRDATA
+    val hex: String = Hex.toHexString(encoded).toUpperCase
+    s"${de.getDomainName}. 299 IN TYPE$daneType \\# ${encoded.length} ${hex}"
+  }
+
+
+  // // // // // // // // // // Message Security Methods
+
+
+  /**
+   * Creates a signed and encrypted copy of the given email.
+   */
+  def signAndEncrypt(email: Email, fromIdentity: JcaPKIXIdentity, toUserCert: X509Certificate): Email = {
+    encrypt(sign(email, fromIdentity), toUserCert)
+  }
+
+
+  /**
+   * Creates a signed copy of the given email.  Email body will be MimeMultiPart, with the second part as the signature.
+   */
+  def sign(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
+
+    val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(providerName).build(algorithmName, fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
+    val signedMultipart: MimeMultipart = toolkit.sign(email.bodyPart, signerInfo)
+
+    Email(email.from, email.to, email.subject, signedMultipart)
+  }
+
+
+  /**
+   * Creates an encrypted copy of the given email.  Email body will be an encrypted MimeBodyPart.
+   */
   def encrypt(email: Email, toUserCert: X509Certificate): Email = {
     if (toUserCert == null)
       throw new Exception("no cert for encryption")
@@ -112,81 +175,12 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
-    createDANEEntry(email, cert.getEncoded)
-  }
+  // // // // // // // // // // Message Inspection
 
-
-  def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
-    val holder: X509CertificateHolder = new X509CertificateHolder(certBytes)
-    validateCert(holder)
-
-   daneEntryFactory.createEntry(email, holder)
-  }
-
-
-  def getDnsZoneLineForDaneEntry(de: DANEEntry): String = {
-    val encoded: Array[Byte] = de.getRDATA
-    val hex: String = Hex.toHexString(encoded).toUpperCase
-    s"${de.getDomainName}. 299 IN TYPE$daneType \\# ${encoded.length} ${hex}"
-  }
-
-
-  def loadIdentity(keyFileName: String, certFileName: String): JcaPKIXIdentity = {
-    val keyFile: File = new File(keyFileName)
-    if (!keyFile.canRead) {
-      return null
-    }
-    val certFile: File = new File(certFileName)
-
-    new JcaPKIXIdentityBuilder().setProvider(providerName).build(keyFile, certFile)
-  }
-
-
-  def generateIdentity(address: InternetAddress): JcaPKIXIdentity = generateIdentity(address.getPersonal, address.getAddress)
-
-  def generateIdentity(fullName: String, emailAddress: String): JcaPKIXIdentity = {
-    //The openssl commands used are:
-    //# 1.	Create a new RSA private key of 2048 bits:
-    //$ openssl genrsa -out certkey.pem 2048
-    //# 2.	Create the private key and corresponding public key in DER (binary) form:
-    //# $ openssl rsa -in certkey.pem -outform der -out certkey.der
-    //# $ openssl rsa -in certkey.pem -pubout -outform der -out certpub.der
-    //# 3.	Create a self-signed certificate using that key. The user name here is "Sample Person" and her e-mail address is "sample@example.org":
-    //$ openssl req -subj "/CN=Sample Person/emailAddress=sample@example.org" -new -key certkey.pem -x509 -days 3660 -outform der -out cert.der
-    val kpGen: KeyPairGenerator = KeyPairGenerator.getInstance("RSA", providerName)
-    kpGen.initialize(2048, new SecureRandom)
-
-    // after this the keys are created. getEncoded() on the rsaPair.getPrivate() and rsaPair.getPublic() will
-    // return the DER encoding of the key.
-    val rsaPair: KeyPair = kpGen.generateKeyPair
-
-    // specify the name to go in the subject/issuer for the certificate
-    val x500Bldr: X500NameBuilder = new X500NameBuilder
-
-    x500Bldr.addRDN(BCStyle.CN, fullName)
-    x500Bldr.addRDN(BCStyle.EmailAddress, emailAddress)
-
-    val id: X500Name = x500Bldr.build
-
-    // set the start and expiry dates for the certificate
-    val notBefore: Date = new Date(System.currentTimeMillis - (5 * 60 * 1000))
-    val notAfter: Date = new Date(notBefore.getTime + 3660L * 24 * 60 * 60 * 1000)
-
-    // build the certificate
-    val certBldr: X509v1CertificateBuilder = new JcaX509v1CertificateBuilder(id, BigInteger.valueOf(System.currentTimeMillis), notBefore, notAfter, id, rsaPair.getPublic)
-
-    val signer: ContentSigner = new JcaContentSignerBuilder("SHA1withRSA").setProvider(providerName).build(rsaPair.getPrivate)
-    val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
-
-    // create self-signed certificate
-    val rsaCert: X509Certificate = certConverter.getCertificate(certBldr.build(signer))
-
-    new JcaPKIXIdentity(rsaPair.getPrivate, Array[X509Certificate](rsaCert))
-  }
-
-
-  def inspectMessage(message: Message, toIdentity: JcaPKIXIdentity, fromCert: X509Certificate): MessageDetails = {
+  /**
+   *
+   */
+  def inspectMessage(message: Message, fromCert: X509Certificate, toIdentity: JcaPKIXIdentity): MessageDetails = {
     val from = message.getFrom()(0) match {
       case ia: InternetAddress => ia
       case a: Address => new InternetAddress(a.toString)
@@ -217,6 +211,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
     }
   }
 
+
   def getRecipientId(toIdentity: JcaPKIXIdentity): RecipientId = {
     try {
       toIdentity.getRecipientId
@@ -226,6 +221,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
       case e: NullPointerException => new KeyTransRecipientId(toIdentity.getCertificate.getIssuer, toIdentity.getCertificate.getSerialNumber, null)
     }
   }
+
 
   def extractSigningInfo(fromCert: X509Certificate, content: AnyRef): SigningInfo = {
     content match {
@@ -284,12 +280,22 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 
 
-  def validateCert(holder: X509CertificateHolder): Unit = {
+  /**
+   * Checks the holder for 
+   * @param certBytes
+   */
+  def validateCert(certBytes: Array[Byte]): X509CertificateHolder = {
+    validateCert(new X509CertificateHolder(certBytes))
+  }
+
+
+  def validateCert(holder: X509CertificateHolder): X509CertificateHolder = {
     val contentVerifierProvider = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder()).build(holder);
     if (!holder.isSignatureValid(contentVerifierProvider))
       throw new BadCertificateException("Certificate signature is bad.")
-//    if (!holder.isValidOn(new Date))  //todo: uncomment... this is commented out for now because our major test email has an expired cert.
-//      throw new BadCertificateException("Certificate expired.")
+    //    if (!holder.isValidOn(new Date))  //todo: uncomment... this is commented out for now because our major test email has an expired cert.
+    //      throw new BadCertificateException("Certificate expired.")
+    holder
   }
 
 
@@ -329,6 +335,9 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   }
 }
 
+
+// // // // // // // // // // Support classes
+
 /**
  * Value Object class to describe a mail Message encryption and signing information.
  */
@@ -354,6 +363,7 @@ class MessageDetails(@BeanProperty val from: InternetAddress,
   }
 }
 
+
 /**
  * Value Object class to describe a mail Message signing information.
  */
@@ -362,6 +372,7 @@ class SigningInfo(@BeanProperty val signed: Boolean,
                   @BeanProperty val signedByCert: Boolean,
                   @BeanProperty val casSigned: Boolean) {
 }
+
 
 /**
  * Value Object class to hold mime content and mimeType
@@ -381,20 +392,18 @@ class ContentPart(val mimeType: String, val content: AnyRef) {
   }
 }
 
+
 /**
  * General Exception for decryption problems.
  */
 class DecryptionException(message: String) extends Exception(message)
+
 
 /**
  * General Exception for certificate problems, such as encoding, signing, or expiring.
  */
 class BadCertificateException(message: String) extends Exception(message)
 
-/**
- * Singleton DaneSmimeaService based on config dns
- */
-object DaneSmimeaService extends DaneSmimeaService(config.getString("DaneSmimeaService.dns"))
 
 /**
  * Singleton to add BouncyCastleProvider to java Security exactly once.
@@ -404,6 +413,7 @@ object BouncyCastleProviderSetup {
 
   def init() = {} //noop - this method provides a descriptive way to ensure this singleton is initialized/touched
 }
+
 
 /**
  * Class that fetches DANEEntry's for given email addressses

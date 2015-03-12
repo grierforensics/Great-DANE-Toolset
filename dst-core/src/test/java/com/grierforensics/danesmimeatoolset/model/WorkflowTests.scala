@@ -6,7 +6,9 @@ import com.grierforensics.danesmimeatoolset.persist.WorkflowDao
 import com.grierforensics.danesmimeatoolset.service.EmailSender
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
+/** Test basic workflow functionality.  Most tests should be implemented via the WorkflowResourceTest. */
 class WorkflowTests extends FunSuite with BeforeAndAfterAll {
+
   val message = EmailSender.createMessage(Email(new InternetAddress("a@b.c"), new InternetAddress("x@y.z"), "subject", "body"))
 
   test("happy path") {

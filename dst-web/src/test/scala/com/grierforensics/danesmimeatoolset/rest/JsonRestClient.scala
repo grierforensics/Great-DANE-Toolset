@@ -1,6 +1,7 @@
 package com.grierforensics.danesmimeatoolset.rest
 
 import java.io.InputStream
+import java.lang.reflect.Type
 import java.net.URLEncoder
 import javax.ws.rs._
 import javax.ws.rs.client.Entity
@@ -8,6 +9,7 @@ import javax.ws.rs.core.Response.Status.Family
 import javax.ws.rs.core.{Form, GenericType, MediaType, Response}
 
 import com.grierforensics.danesmimeatoolset.service.GensonConfig
+import com.owlike.genson
 
 import scala.io.{Codec, Source}
 
@@ -21,10 +23,10 @@ trait JsonRestClient {
 
   //get
   def getResponse[T](url: String): Response = {
-    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).get()
+    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).get()
   }
 
-  def get[T](url: String): String = handleResponse(getResponse(url), classOf[String])
+  def get[T](url: String): String = handleResponse(getResponse(url))
 
   def get[T](url: String, entityType: Class[T]): T = handleResponse(getResponse(url), entityType)
 
@@ -35,10 +37,10 @@ trait JsonRestClient {
 
   def postToResponse[T](url: String, any: Any): Response = {
     val entity: Entity[Any] = Entity.entity(any, MediaType.APPLICATION_JSON)
-    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
+    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
   }
 
-  def post[T](url: String, any: Any): String = handleResponse(postToResponse(url, any), classOf[String])
+  def post[T](url: String, any: Any): String = handleResponse(postToResponse(url, any))
 
   def post[T](url: String, any: Any, entityType: Class[T]): T = handleResponse(postToResponse(url, any), entityType)
 
@@ -48,7 +50,7 @@ trait JsonRestClient {
                        requestMediaType: String = MediaType.TEXT_PLAIN,
                        responseMediaType: String = MediaType.TEXT_PLAIN): String = {
     val entity: Entity[Any] = Entity.entity(any, requestMediaType)
-    val response: Response = App.newClient.target(url).request(responseMediaType).post(entity)
+    val response: Response = WebClient().target(url).request(responseMediaType).post(entity)
 
     if (response.getStatusInfo.getFamily != Family.SUCCESSFUL)
       throwForResponse(response)
@@ -67,11 +69,11 @@ trait JsonRestClient {
       form.param(k, v)
     val entity: Entity[Form] = Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE)
 
-    App.newClient.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
+    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
   }
 
   def postForm[T](url: String, params: Map[String, String]): String =
-    handleResponse(postFormToResponse(url, params), classOf[String])
+    handleResponse(postFormToResponse(url, params))
 
   def postForm[T](url: String, params: Map[String, String], entityType: Class[T]): T =
     handleResponse(postFormToResponse(url, params), entityType)
@@ -82,29 +84,23 @@ trait JsonRestClient {
 
   //response handling
 
-  def handleResponse[T](response: Response, entityType: Class[T]): T = {
+  def handleResponse(response: Response): String = {
     if (response.getStatusInfo.getFamily == Family.SUCCESSFUL) {
-      val result: T = response.readEntity(entityType)
-      //workaround because Jersey skips deserializing string results (JSON is already a string)
-      result match {
-        case s: String if entityType == classOf[String] => GensonConfig.genson.deserialize(s, entityType)
-        case otherwise => otherwise
-      }
+      response.readEntity(classOf[String])
     } else
       throwForResponse(response)
   }
 
 
+  def handleResponse[T](response: Response, entityType: Class[T]): T = {
+    val json: String = handleResponse(response)
+    GensonConfig.genson.deserialize(json, entityType)
+  }
+
+
   def handleResponse[T](response: Response, entityType: GenericType[T]): T = {
-    if (response.getStatusInfo.getFamily == Family.SUCCESSFUL) {
-      val result: T = response.readEntity(entityType)
-      //workaround because Jersey skips deserializing string results (JSON is already a string)
-      result match {
-        case s: String if entityType.getRawType == classOf[String] => GensonConfig.genson.deserialize(s, classOf[String]).asInstanceOf[T]
-        case otherwise => otherwise
-      }
-    } else
-      throwForResponse(response)
+    val json: String = handleResponse(response)
+    GensonConfig.genson.deserialize(json, new GensonGenericTypeWrapper(entityType))
   }
 
 
@@ -130,4 +126,13 @@ trait JsonRestClient {
   def urlEncode(s: String): String = {
     URLEncoder.encode(s, "UTF-8")
   }
+
+
+  /** Represents javax.ws.rs.core.GenericType as a Genson GenericType */
+  class GensonGenericTypeWrapper[T](gt: GenericType[T]) extends genson.GenericType[T] {
+    override def getType: Type = gt.getType
+
+    override def getRawClass: Class[T] = gt.getRawType.asInstanceOf[Class[T]]
+  }
+
 }

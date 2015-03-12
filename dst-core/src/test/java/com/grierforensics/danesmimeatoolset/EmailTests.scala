@@ -1,14 +1,11 @@
-
 package com.grierforensics.danesmimeatoolset
 
 import javax.mail.Message
-import javax.mail.internet.InternetAddress
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.service.{EmailFetcher, EmailSender, MessageDetails}
 import com.grierforensics.danesmimeatoolset.util.DstTestValues._
 import com.typesafe.scalalogging.LazyLogging
-import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.scalatest._
 
 import scala.collection.mutable.ListBuffer
@@ -17,25 +14,26 @@ class EmailTests extends FunSuite with BeforeAndAfterAll with LazyLogging {
 
   test("send and fetch email with signing and encryption") {
     val sender = EmailSender
-    val fetcher = new EmailFetcher("pop.gmail.com", "dst.bob@example.com", "dst.bob!")
+    val fetcher = EmailFetcher
+    //    val fetcher = new EmailFetcher(bobPopHost, bobAddress.getAddress, bobEmailPassword)
 
     val subject: String = "test email: " + System.currentTimeMillis()
     val text: String = "secret message"
-    val email = Email(testAddress, bobAddress, subject, text)
+    val email = Email(bobAddress, dstAddress, subject, text)
 
     sender.send(email)
-    Thread.sleep(1000)
-    sender.send(testDss.sign(email, testIdentity))
-    Thread.sleep(1000)
-    sender.send(testDss.signAndEncrypt(email, testIdentity))
-    Thread.sleep(1000)
+    Thread.sleep(5000)
+    sender.send(testDss.sign(email, bobIdentity))
+    Thread.sleep(5000)
+    sender.send(testDss.signAndEncrypt(email, bobIdentity, dstIdentity.getX509Certificate))
+    Thread.sleep(5000)
 
     val fetched = ListBuffer[MessageDetails]()
     def handle(message: Message): Boolean = {
       if (message.getSubject != subject)
         return false
 
-      fetched += testDss.inspectMessage(message, bobIdentity, testIdentity.getX509Certificate)
+      fetched += testDss.inspectMessage(message, bobIdentity.getX509Certificate, testIdentity)
       true
     }
     fetcher.fetchAndDelete(handle)
@@ -65,14 +63,14 @@ class EmailTests extends FunSuite with BeforeAndAfterAll with LazyLogging {
 
     val subject: String = "test email: " + System.currentTimeMillis();
     val text: String = "secret message"
-    val email = Email(testAddress, fetcher.address, subject, text)
+    val email = Email(bobAddress, dstAddress, subject, text)
 
     val fetched = ListBuffer[MessageDetails]()
     def handler(message: Message): Boolean = {
       if (message.getSubject != subject)
         return false
 
-      fetched += testDss.inspectMessage(message, bobIdentity, testIdentity.getX509Certificate)
+      fetched += testDss.inspectMessage(message, bobIdentity.getX509Certificate, dstIdentity)
       true
     }
 

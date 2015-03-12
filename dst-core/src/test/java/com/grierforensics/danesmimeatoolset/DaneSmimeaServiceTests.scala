@@ -15,7 +15,7 @@ class DaneSmimeaServiceTests extends FunSuite with BeforeAndAfterAll with LazyLo
     val zl1: String = testDss.getDnsZoneLineForDaneEntry(de1)
     assert(zl1 == emailWithDanePublishedZoneLine)
 
-    val de2: DANEEntry = testDss.createDANEEntry(emailWithDane, testDss.getCert(de1))
+    val de2: DANEEntry = testDss.createDANEEntry(emailWithDane, testDss.getCertFromDANEEntry(de1))
     val zl2: String = testDss.getDnsZoneLineForDaneEntry(de2)
     assert(zl2 == emailWithDanePublishedZoneLine)
   }

@@ -7,8 +7,53 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.ListBuffer
 
+/** Singleton holding a loaded config */
+object ConfigHolder {
+  val config = ConfigLoader.loadConfig("conf.conf")
+}
+
+
+/** Exposes ConfigHolder's config to the extending class. */
+trait Configged {
+  protected def config: Config = ConfigHolder.config
+}
+
+
+/** Utility object for loading config from various locations with varying precedence and supporting config profiles.
+  *
+  * Basic config can be defined in code modules under files named reference.conf at the root of the classpath.
+  * This is the standard for com.typesafe.config
+  *
+  *
+  * Profile config will override basic config.
+  * Profiles are defined in reference.conf files and the current
+  * profile can be indicated in any of the config precedence levels.  Set the current profile with the "profile.current"
+  * property.
+  *
+  * Here is an example of defining a prod profile:
+  * {{{
+  * profile.prod {
+  *   someproperty = "somevalue"
+  * }
+  * }}}
+  *
+  * Here is an example of setting the prod profile as current:
+  * {{{
+  * profile.current = prod
+  * }}}
+  *
+  *
+  * Next in precedence, override file config will override basic and profile config properties.
+  * Config loading will start from each given path and continue checking parent directories for config files with the
+  * given name.  Files with deeper directory paths will take precedence of shallower directory paths.
+  *
+  *
+  * System Properties will take highest precedence.
+  *
+  * */
 object ConfigLoader extends LazyLogging {
 
+  /** Loads all levels of config precedence. */
   def loadConfig(overrideFileName: String, globalPaths: File*): Config = {
     val defaultConfigs: Config = ConfigFactory.load
 
@@ -63,15 +108,4 @@ object ConfigLoader extends LazyLogging {
     }
   }
 }
-
-object ConfigHolder {
-  private var _config = ConfigLoader.loadConfig("conf.conf")
-
-  def config = _config
-}
-
-trait Configed {
-  protected def config: Config = ConfigHolder.config
-}
-
 

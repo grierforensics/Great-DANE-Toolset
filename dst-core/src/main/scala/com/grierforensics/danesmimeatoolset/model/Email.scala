@@ -2,6 +2,8 @@ package com.grierforensics.danesmimeatoolset.model
 
 import javax.mail.internet.{InternetAddress, MimeBodyPart, MimeMultipart}
 
+
+/** Represents an email with some abstraction the MimeMultipart/MimeBodyPart message body. */
 class Email private(val from: InternetAddress,
                     val to: InternetAddress,
                     val subject: String,
@@ -12,6 +14,8 @@ class Email private(val from: InternetAddress,
     case message: MimeBodyPart => message.getContentType
     case _ => throw new IllegalArgumentException("email message must be a non-null MimeMultipart or MimeBodyPart")
   }
+
+  def isMultipart: Boolean = content.isInstanceOf[MimeMultipart]
 
   def bodyPart: MimeBodyPart = content match {
     case message: MimeMultipart => throw new NotImplementedError("wrapping MimeMultipart in MimeBodyPart not implemented yet") //todo: implement
@@ -29,25 +33,21 @@ class Email private(val from: InternetAddress,
   }
 }
 
+
+/** Companion object for convenient typesafe Email creation. */
 object Email {
 
-  /**
-   * Constructs an Email using a MimeBodyPart message
-   */
+  /** Constructs an Email using a MimeBodyPart message */
   def apply(from: InternetAddress, to: InternetAddress, subject: String, message: MimeMultipart): Email = {
     new Email(from, to, subject, message)
   }
 
-  /**
-   * Constructs an Email using a MimeMultipart message
-   */
+  /** Constructs an Email using a MimeMultipart message */
   def apply(from: InternetAddress, to: InternetAddress, subject: String, message: MimeBodyPart): Email = {
     new Email(from, to, subject, message)
   }
 
-  /**
-   * Constructs an Email using a text String
-   */
+  /** Constructs an Email using a text String */
   def apply(from: InternetAddress, to: InternetAddress, subject: String, text: String): Email = {
     new Email(from, to, subject, {
       val m = new MimeBodyPart()

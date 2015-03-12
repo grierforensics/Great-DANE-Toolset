@@ -9,9 +9,10 @@ import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 import com.typesafe.scalalogging.LazyLogging
 
 
+/** Sends Email's via SMTP server. */
 class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) extends LazyLogging {
 
-  val session: Session = {
+  private val session: Session = {
     val props: Properties = System.getProperties
     props.put("mail.smtp.host", smtpHost);
     if (useTls) {
@@ -27,6 +28,7 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     Session.getDefaultInstance(props, authenticator)
   }
 
+  /** Sends an email. */
   def send(email: Email): Unit = {
     val message: MimeMessage = createMessage(email)
     try {
@@ -34,10 +36,12 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
       logger.debug(s"email sent to=${email.to}")
     }
     catch {
+      case e: SendFailedException => throw e
       case e: Exception => throw new EmailSendFailedException(e)
     }
   }
 
+  /** Utility method for creating a MimeMessage from an Email instance. */
   def createMessage(email: Email): MimeMessage = {
     val message: MimeMessage = new MimeMessage(session)
     message.setFrom(email.from)
@@ -61,10 +65,12 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
   }
 }
 
+/** Singleton instance. */
 object EmailSender extends EmailSender(
   config.getString("EmailSender.host"),
   config.getString("EmailSender.username"),
   config.getString("EmailSender.password"),
   true)
 
+/** Thrown when email can not be sent. */
 class EmailSendFailedException(cause:Throwable) extends Exception(cause)
