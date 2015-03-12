@@ -22,11 +22,11 @@ class EmailTests extends FunSuite with BeforeAndAfterAll with LazyLogging {
     val email = Email(bobAddress, dstAddress, subject, text)
 
     sender.send(email)
-    Thread.sleep(5000)
+    Thread.sleep(1000)
     sender.send(testDss.sign(email, bobIdentity))
-    Thread.sleep(5000)
+    Thread.sleep(1000)
     sender.send(testDss.signAndEncrypt(email, bobIdentity, dstIdentity.getX509Certificate))
-    Thread.sleep(5000)
+    Thread.sleep(7000)
 
     val fetched = ListBuffer[MessageDetails]()
     def handle(message: Message): Boolean = {

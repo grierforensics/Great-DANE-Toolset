@@ -8,23 +8,27 @@ import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 import com.typesafe.scalalogging.LazyLogging
 
-
 /** Sends Email's via SMTP server. */
-class EmailSender(val smtpHost: String, val username: String, val password: String, val useTls: Boolean = true) extends LazyLogging {
+class EmailSender(val smtpHost: String, val username: String, val password: String,
+                  val useTls: Boolean , val port: Int) extends LazyLogging {
 
   private val session: Session = {
     val props: Properties = System.getProperties
-    props.put("mail.smtp.host", smtpHost);
+    props.put("mail.smtp.host", smtpHost)
+    props.put("mail.smtp.port", port.toString)
+    props.put("mail.smtp.auth", "true")
     if (useTls) {
-      props.put("mail.smtp.port", "587");
-      props.put("mail.smtp.starttls.enable", "true");
+      props.put("mail.smtp.starttls.enable", "true")
+      props.put("mail.smtp.ssl.checkserveridentity", "false")
+      props.put("mail.smtp.ssl.trust", "*")
     }
-    props.put("mail.smtp.auth", "true");
+
     val authenticator: Authenticator {def getPasswordAuthentication: PasswordAuthentication} = new Authenticator() {
       override def getPasswordAuthentication: PasswordAuthentication = {
         new PasswordAuthentication(username, password)
       }
     }
+
     Session.getDefaultInstance(props, authenticator)
   }
 
@@ -70,7 +74,8 @@ object EmailSender extends EmailSender(
   config.getString("EmailSender.host"),
   config.getString("EmailSender.username"),
   config.getString("EmailSender.password"),
-  true)
+  config.getBoolean("EmailSender.useTls"),
+  config.getInt("EmailSender.port"))
 
 /** Thrown when email can not be sent. */
-class EmailSendFailedException(cause:Throwable) extends Exception(cause)
+class EmailSendFailedException(cause: Throwable) extends Exception(cause)

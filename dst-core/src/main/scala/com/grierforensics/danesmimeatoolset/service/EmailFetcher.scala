@@ -17,7 +17,7 @@ class EmailFetcher(val pop3Host: String,
                    val password: String,
                    val folderName: String = "INBOX") extends LazyLogging {
 
-  val pop3Port: Int = 995
+  val pop3Port: Int = 995  //todo: make this part of config
 
   val fetchLock = new Object
   val asyncLock = new Object
