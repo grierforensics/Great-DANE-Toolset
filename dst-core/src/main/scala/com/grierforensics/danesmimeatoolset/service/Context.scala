@@ -23,7 +23,8 @@ object Context extends LazyLogging {
   val workflowDao = WorkflowDao
 
   val dstAddress: InternetAddress = new InternetAddress(config.getString("Workflow.fromAddress"), config.getString("Workflow.fromName"))
-  val dstIdentity = IdentityUtil.generateIdentity(dstAddress)
+  val dstIdentity = IdentityUtil.loadIdentity("danesmime-test-priv.pem","danesmime-test-cert.pem")
+//  val dstIdentity = IdentityUtil.generateIdentity(dstAddress)
   val dstCertBase64Str = Base64.toBase64String(new X509CertificateHolder(dstIdentity.getX509Certificate.getEncoded).getEncoded)
 
   val clickHost = config.getString("Workflow.clickHostUrl")

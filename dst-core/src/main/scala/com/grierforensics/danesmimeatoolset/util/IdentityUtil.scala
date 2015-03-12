@@ -1,6 +1,6 @@
 package com.grierforensics.danesmimeatoolset.util
 
-import java.io.File
+import java.io.{InputStream, File}
 import java.math.BigInteger
 import java.security.cert.X509Certificate
 import java.security.{KeyPair, KeyPairGenerator, SecureRandom}
@@ -25,13 +25,10 @@ object IdentityUtil {
    * todo: test. this will get exercised when we have a permanent dst cert
    */
   def loadIdentity(keyFileName: String, certFileName: String): JcaPKIXIdentity = {
-    val keyFile: File = new File(keyFileName)
-    if (!keyFile.canRead) {
-      return null
-    }
-    val certFile: File = new File(certFileName)
+    val keyIs: InputStream = getClass.getClassLoader.getResourceAsStream(keyFileName)
+    val certIs: InputStream = getClass.getClassLoader.getResourceAsStream(certFileName)
 
-    new JcaPKIXIdentityBuilder().setProvider(providerName).build(keyFile, certFile)
+    new JcaPKIXIdentityBuilder().setProvider(providerName).build(keyIs, certIs)
   }
 
   /** Generates an JcaPKIXIdentity based on email information. */
