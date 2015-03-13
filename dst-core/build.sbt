@@ -2,12 +2,12 @@ name := "dst-core"
 
 organization := "com.grierforensics"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.2"
 
 scalaVersion := "2.11.4"
 
 libraryDependencies ++= Seq(
-  "com.grierforensics" %% "dst-bc" % "0.1.0-SNAPSHOT",
+  "com.grierforensics" %% "dst-bc" % "0.2",
   "javax.mail" % "mail" % "1.4.7",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
