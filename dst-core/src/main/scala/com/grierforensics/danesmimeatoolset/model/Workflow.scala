@@ -189,7 +189,9 @@ class Workflow(@BeanProperty val id: String,
            -
            - Signature is Invalid - ${context.clickHost}/workflow/$id/click/${ClickType.receivedSignedBad}?uiRedirect=true
 
-         To learn more about DANE SMIME here are some helpful links: ... TBD
+
+         Regards,
+         -- DST Team
      """.stripMargin
     )
   }
