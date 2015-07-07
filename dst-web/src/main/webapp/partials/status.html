@@ -56,8 +56,10 @@
                             From: <strong>{{event.details.from}}</strong><br/>
                             Encrypted: <strong>{{event.details.encrypted}}</strong><br/>
                             Signed: <strong>{{event.details.signingInfo.signed}}</strong><br/>
-                            Signature Valid: <strong>{{event.details.signingInfo.signatureValid}}</strong><br/>
-                            DANE Signature used: <strong>{{event.details.signingInfo.signedByCert}}</strong> ({{workflow.emailAddress}})
+                            <span ng-if="event.details.signingInfo.signed">
+                              Signature Valid: <strong>{{event.details.signingInfo.signatureValid}}</strong><br/>
+                              DANE Signature used: <strong>{{event.details.signingInfo.signedByCert}}</strong> ({{workflow.emailAddress}})
+                            </span>
                             <!--Certificate Authority Signature used: {{event.details.signingInfo.casSigned}}</div>-->
                             </p>
                         </div>

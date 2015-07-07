@@ -9,6 +9,7 @@ import com.grierforensics.danesmimeatoolset.util.ConfigHolder._
 import com.grierforensics.danesmimeatoolset.util.IdentityUtil
 import com.typesafe.scalalogging.LazyLogging
 import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.bouncycastle.util.encoders.Base64
 
 /** Context sets up services according to config.
@@ -22,12 +23,12 @@ object Context extends LazyLogging {
   val fetcher = EmailFetcher
   val workflowDao = WorkflowDao
 
-  val dstAddress: InternetAddress = new InternetAddress(config.getString("Workflow.fromAddress"), config.getString("Workflow.fromName"))
-  val dstIdentity = IdentityUtil.loadIdentity("danesmime-test-priv.pem","danesmime-test-cert.pem")
-//  val dstIdentity = IdentityUtil.generateIdentity(dstAddress)
+  val dstAddress: InternetAddress = new InternetAddress(config.getString("Context.fromAddress"), config.getString("Context.fromName"))
+  val dstIdentity = loadIdentity
+
   val dstCertBase64Str = Base64.toBase64String(new X509CertificateHolder(dstIdentity.getX509Certificate.getEncoded).getEncoded)
 
-  val clickHost = config.getString("Workflow.clickHostUrl")
+  val clickHost = config.getString("Context.clickHostUrl")
 
   def fetcherStart() = fetcher.asyncFetchAndDelete(handleMessage, config.getLong("EmailFetcher.period"))
 
@@ -46,6 +47,19 @@ object Context extends LazyLogging {
     }
 
     true
+  }
+
+  private def loadIdentity: JcaPKIXIdentity = {
+    //todo: attempt to load key and cert from config.  This will allow them to be specified in elasticbeanstalk config.
+    try {
+      IdentityUtil.loadIdentity("key.pem", "cert.pem")
+    }
+    catch {
+      case e: Exception => {
+        logger.warn("Server identity files could not be loaded, so generated identity is being used instead.")
+        IdentityUtil.generateIdentity(dstAddress)
+      }
+    }
   }
 
 }

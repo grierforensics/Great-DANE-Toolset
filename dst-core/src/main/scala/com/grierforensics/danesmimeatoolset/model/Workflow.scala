@@ -166,8 +166,20 @@ class Workflow(@BeanProperty val id: String,
 
 
   private def createEmail: Email = {
+    val certDataAddendum = cert match {
+      case Some(s) => "Certificate data:\n" + getCertData
+      case None => ""
+    }
+
+    val certDescriptionForEmail = cert match {
+      case Some(c) => {
+        s"""You have a DANE SMIMEA record associated with your email address! ($emailAddress) Your certificate information is included at the bottom of this email."""
+      }
+      case None => s"Sorry, you do NOT have a DANE SMIMEA record associated with your email address ($emailAddress)"
+    }
+
     Email(context.dstAddress, new InternetAddress(emailAddress),
-      s"Test Mail from DANE SMIMEA Toolset ($id)",
+      s"DANE SMIMEA Toolset Mail Test ($id)",
       s"""Hello,
 
          This is a test email sent by the DANE SMIMEA Toolset.
@@ -179,8 +191,7 @@ class Workflow(@BeanProperty val id: String,
          ! Please reply to this email to complete the test !
 
          Then click here to followup and see the result:
-            ${context.clickHost}/#/workflow/$id
-
+            ${context.clickHost}/page/workflow/$id
 
 
          Also, you may click the following links to indicate if this email signature is valid or not.
@@ -192,16 +203,12 @@ class Workflow(@BeanProperty val id: String,
 
          Regards,
          -- DST Team
+
+
+         Certificate data:
+         ${getCertData}}
      """.stripMargin
     )
-  }
-
-
-  private def certDescriptionForEmail: String = {
-    cert match {
-      case Some(c) => s"You have a valid DANE SMIMEA record associated with your email address! ($emailAddress)\n"
-      case None => s"Sorry, you do not have a valid DANE SMIMEA record associated with your email address ($emailAddress)"
-    }
   }
 
 

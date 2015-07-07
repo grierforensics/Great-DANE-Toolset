@@ -9,7 +9,7 @@ import scala.collection.mutable.ListBuffer
 
 /** Singleton holding a loaded config */
 object ConfigHolder {
-  val config = ConfigLoader.loadConfig("conf.conf")
+  val config = ConfigLoader.loadConfig()
 }
 
 
@@ -54,8 +54,9 @@ trait Configged {
 object ConfigLoader extends LazyLogging {
 
   /** Loads all levels of config precedence. */
-  def loadConfig(overrideFileName: String, globalPaths: File*): Config = {
+  def loadConfig(globalPaths: File*): Config = {
     val defaultConfigs: Config = ConfigFactory.load
+    val overrideFileName = defaultConfigs.getString("config.filename")
 
     val propertyConfigs: Config = ConfigFactory.defaultOverrides
     logger.debug("Config System.property overrides:\n" + propertyConfigs.root.render)
