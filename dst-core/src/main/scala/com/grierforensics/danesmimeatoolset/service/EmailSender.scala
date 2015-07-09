@@ -55,7 +55,11 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     //    message.setContent(email.content, email.contentType)
     email.content match {
       case p: Part if p.getContentType == "text/plain" => message.setContent(p.getContent, p.getContentType)
-      case otherwise => message.setContent(email.content, email.contentType)
+      case otherwise => {
+        message.setContent(email.content, email.contentType)
+        message.removeHeader("Content-Transfer-Encoding")  //these values come from the content setting above
+        message.removeHeader("Content-Type")               //these values come from the content setting above
+      }
     }
     message.saveChanges
     message

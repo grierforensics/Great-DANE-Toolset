@@ -1,32 +1,27 @@
 package com.grierforensics.danesmimeatoolset.service
 
-import java.io.{File, InputStream}
-import java.math.BigInteger
+import java.io.InputStream
 import java.security._
 import java.security.cert._
 import java.util
-import java.util._
 import javax.mail.internet.{InternetAddress, MimeBodyPart, MimeMultipart}
 import javax.mail.{Address, Message, Part}
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.typesafe.scalalogging.LazyLogging
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers
-import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.asn1.x500.{X500Name, X500NameBuilder}
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier
 import org.bouncycastle.cert.dane._
 import org.bouncycastle.cert.dane.fetcher.JndiDANEFetcherFactory
-import org.bouncycastle.cert.jcajce.{JcaX509CertificateConverter, JcaX509CertificateHolder, JcaX509v1CertificateBuilder}
-import org.bouncycastle.cert.{X509CertificateHolder, X509v1CertificateBuilder, dane}
+import org.bouncycastle.cert.jcajce.{JcaX509CertificateConverter, JcaX509CertificateHolder}
+import org.bouncycastle.cert.{X509CertificateHolder, dane}
 import org.bouncycastle.cms.jcajce._
 import org.bouncycastle.cms.{KeyTransRecipientId, RecipientId, SignerInfoGenerator, SignerInformation}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.mail.smime.{SMIMESigned, SMIMEToolkit}
-import org.bouncycastle.openssl.jcajce.JcaPKIXIdentityBuilder
 import org.bouncycastle.operator._
 import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder
-import org.bouncycastle.operator.jcajce.{JcaContentSignerBuilder, JcaDigestCalculatorProviderBuilder}
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 import org.bouncycastle.pkix.jcajce.JcaPKIXIdentity
 import org.bouncycastle.util.encoders.Hex
 
@@ -199,7 +194,10 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
       case true => {
         if (toIdentity == null)
           throw new DecryptionException("Private key unavailable for decryption")
-        val part: MimeBodyPart = new MimeBodyPart(message.getContent.asInstanceOf[InputStream])
+        val part: MimeBodyPart = message.getContent match {
+          case mbp: MimeBodyPart => mbp
+          case is => new MimeBodyPart(is.asInstanceOf[InputStream])
+        }
         val recipientId = getRecipientId(toIdentity)
         val decrypted: MimeBodyPart = toolkit.decrypt(part, recipientId, new JceKeyTransEnvelopedRecipient(toIdentity.getPrivateKey).setProvider(providerName))
         if (decrypted.isMimeType("multipart/signed"))
@@ -357,8 +355,8 @@ class MessageDetails(@BeanProperty val from: InternetAddress,
     val partsDump = parts.mkString("\n")
 
     s"""=== $from - $subject
-        |--- encrypted:$encrypted signed:${signingInfo.signed} signatureValid:${signingInfo.signatureValid} signedByCert:${signingInfo.signedByCert} casSigned:${signingInfo.casSigned}
-        |$partsDump
+          |--- encrypted:$encrypted signed:${signingInfo.signed} signatureValid:${signingInfo.signatureValid} signedByCert:${signingInfo.signedByCert} casSigned:${signingInfo.casSigned}
+          |$partsDump
      """.stripMargin
   }
 }
