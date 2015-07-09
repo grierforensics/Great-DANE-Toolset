@@ -2,7 +2,7 @@ name := "dst-web"
 
 organization := "com.grierforensics"
 
-version := "0.3"
+version := "0.5"
 
 scalaVersion := "2.11.4"
 
@@ -16,7 +16,7 @@ tomcat()
 resolvers += Resolver.sonatypeRepo("releases")
 
 libraryDependencies ++= Seq(
-  "com.grierforensics" %% "dst-core" % "0.3",
+  "com.grierforensics" %% "dst-core" % "0.5",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14"
 )
