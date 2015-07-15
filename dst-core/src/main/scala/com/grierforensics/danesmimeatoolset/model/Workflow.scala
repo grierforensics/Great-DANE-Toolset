@@ -36,12 +36,11 @@ class Workflow(@BeanProperty val id: String,
    * @param updateCertificate if true, the workflow cert will first be updated.
    */
   def sendEmail(updateCertificate: Boolean = true): Unit = {
-    val email = createEmail
-
-    val signedEmail: Email = context.daneSmimeaService.sign(email, context.dstIdentity)
-
     if (updateCertificate)
       updateCert()
+
+    val email = createEmail
+    val signedEmail: Email = context.daneSmimeaService.sign(email, context.dstIdentity)
 
     cert match {
       case Some(c) => {

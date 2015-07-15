@@ -2,15 +2,17 @@ package com.grierforensics.danesmimeatoolset.service
 
 import java.util.Properties
 import javax.mail._
-import javax.mail.internet.{MimeMultipart, MimeBodyPart, MimeMessage}
+import javax.mail.internet.MimeMessage
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.JavaConversions._
+
 /** Sends Email's via SMTP server. */
 class EmailSender(val smtpHost: String, val username: String, val password: String,
-                  val useTls: Boolean , val port: Int) extends LazyLogging {
+                  val useTls: Boolean, val port: Int) extends LazyLogging {
 
   private val session: Session = {
     val props: Properties = System.getProperties

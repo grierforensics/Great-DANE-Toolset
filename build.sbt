@@ -3,7 +3,7 @@ name := "dst"
 
 organization := "com.grierforensics"
 
-version := "0.5"
+version := "0.7"
 
 scalaVersion := "2.11.4"
 
