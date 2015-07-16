@@ -63,7 +63,31 @@ Configuration is loaded from the following locations in order of precedence from
 The specified profile may have properties that override default properties.
 - reference.conf - A file found in the source resources directory.  It specifies default properties and profile properties.
 
-## Deploying
+## Deploying to AWS Bitnami Tomcat instance
+*We have a bug that has appeared when deploying to the latest Eleastic Beanstalk Tomcat instances.*
+
+For the short term, we are deploying to a basic deploy of a Tomcat server on AWS
+
+#### From the dst source root directory
+```
+$ sbt clean package
+$ scp -i ~/keys/grier-aws.pem dst-web/target/scala-2.11/dst-web-0.8.war bitnami@52.2.156.120:
+```
+
+#### ssh to the AWS Bitnami server
+```
+$ ssh -i ~/keys/grier-aws.pem bitnami@52.2.156.120
+```
+
+#### From the AWS Bitnami server
+```
+$ sudo mv dst-web-0.8.war stack/apache-tomcat/webapps/ROOT.war
+$ sudo rm -rf stack/apache-tomcat/webapps/ROOT
+$ sudo stack/ctlscript.sh restart tomcat
+```
+
+## Deploying to Elastic Beanstalk
+*We have a bug that has appeared when deploying to the latest Eleastic Beanstalk Tomcat instances.*
 
 These are rough instructions for deploying to ElasticBeanstalk. (EB is pretty self explanatory)
 
