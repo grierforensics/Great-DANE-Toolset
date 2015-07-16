@@ -2,13 +2,11 @@ package com.grierforensics.danesmimeatoolset.service
 
 import java.util.Properties
 import javax.mail._
-import javax.mail.internet.MimeMessage
+import javax.mail.internet.{MimeMessage, MimeBodyPart, MimeMultipart}
 
 import com.grierforensics.danesmimeatoolset.model.Email
 import com.grierforensics.danesmimeatoolset.util.ConfigHolder.config
 import com.typesafe.scalalogging.LazyLogging
-
-import scala.collection.JavaConversions._
 
 /** Sends Email's via SMTP server. */
 class EmailSender(val smtpHost: String, val username: String, val password: String,
@@ -54,34 +52,23 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
     message.setReplyTo(Array(email.from))
     message.setRecipient(Message.RecipientType.TO, email.to)
     message.setSubject(email.subject)
-    //    message.setContent(email.content, email.contentType)
     email.content match {
-      case p: Part if p.getContentType == "text/plain" => message.setContent(p.getContent, p.getContentType)
+      case p: Part if p.getContentType == "text/plain" => {
+        message.setContent(p.getContent, p.getContentType)
+      }
       case mbp: MimeBodyPart => {
         message.setContent(mbp.getContent, mbp.getContentType)
-        addHeader(message, mbp, "Content-Disposition")
-        addHeader(message, mbp, "Content-Description")
+        if (mbp.getContentType == "application/pkcs7-mime") {
+          message.addHeader("Content-Disposition", mbp.getHeader("Content-Disposition")(0))
+          message.addHeader("Content-Description", mbp.getHeader("Content-Description")(0))
+        }
       }
-      case mm: MimeMultipart => {
-        message.setContent(mm)
-      }
-      case otherwise => {
-        message.setContent(email.content, email.contentType)
-        message.removeHeader("Content-Transfer-Encoding")  //these values come from the content setting above
-        message.removeHeader("Content-Type")               //these values come from the content setting above
+      case mmp: MimeMultipart => {
+        message.setContent(mmp)
       }
     }
     message.saveChanges
     message
-  }
-
-  private def addHeader(message : MimeMessage, mimeBodyPart : MimeBodyPart, name : String) = {
-      val headers = mimeBodyPart.getHeader(name)
-
-      if (headers != null)
-      {
-          message.addHeader(name, headers(0))
-      }
   }
 
   private def formatAddress(name: Option[String], address: String): String = {
