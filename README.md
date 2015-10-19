@@ -5,7 +5,6 @@ Project to showcase the DANE SMIMEA standard for email signing and encryption.
 The project is devloped with Scala, sbt, Jersey, and AngularJS
 
 The project components are:
-- dst-bc - a wrapper arround the BouncyCastle beta jars which are not found in public repositories.
 - dst-core - common core code for DaneSmimeaService, DST workflow, Email sending, and Email fetching
 - dst-web - Jersey/AngularJS based web application that pulls it all together.
 

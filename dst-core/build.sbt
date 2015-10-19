@@ -7,7 +7,11 @@ version := "0.8"
 scalaVersion := "2.11.4"
 
 libraryDependencies ++= Seq(
-  "com.grierforensics" %% "dst-bc" % "0.8",
+  "org.bouncycastle" % "bcmail-jdk15on" % "1.53",
+  "org.bouncycastle" % "bcpg-jdk15on" % "1.53",
+  "org.bouncycastle" % "bcpkix-jdk15on" % "1.53",
+  "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.53",
+  "org.bouncycastle" % "bcprov-jdk15on" % "1.53",
   "javax.mail" % "mail" % "1.4.7",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
