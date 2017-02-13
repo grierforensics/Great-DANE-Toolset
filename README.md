@@ -2,7 +2,7 @@
 
 Project to showcase the DANE SMIMEA standard for email signing and encryption.
 
-The project is devloped with Scala, sbt, Jersey, and AngularJS
+The project is developed with Scala, sbt, Jersey, and AngularJS
 
 The project components are:
 - dst-core - common core code for DaneSmimeaService, DST workflow, Email sending, and Email fetching
@@ -94,7 +94,7 @@ The production url for DST, http://dst.grierforensics.com/ , is set up as a cnam
 http://dst-prod.elasticbeanstalk.com/ .  Therefore, updating the EB webapp running at dst-prod.elasticbeanstalk.com will
 update the main public url.
 
-First, to nnavigate to the ElasticBeanstalk DST Application on AWS
+First, to navigate to the ElasticBeanstalk DST Application on AWS
 
 - Log onto AWS here: https://grierforensics.signin.aws.amazon.com/console
 - Click the Elastic Beanstalk link.
@@ -132,6 +132,3 @@ Roughly,
 - Verify the new environment.
 - Swap URLs on the new environment and the existing prod environment.
 - Delete the pre-existing prod environment.
-
-
-

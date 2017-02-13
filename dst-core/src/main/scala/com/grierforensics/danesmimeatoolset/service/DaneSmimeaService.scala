@@ -33,30 +33,15 @@ import scala.collection.mutable.ListBuffer
 /**
  * Service providing a collection of DANE and SMIMEA functions around signing, encryption, dane fetching, and dane creation.
  *
- * todo: Break this class apart.
- * This class was orriginally organized arround Bouncy Castle SMIMEToolkit functions.  Now there are some distinct
- * subsections of functionality.  However, there are interdependencies, so I'm waiting until a DI solution is in
- * place before breaking this up.
- * Until then
- *
  * @param dnsServer
  */
 class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
-  BouncyCastleProviderSetup.init()
+  import DaneSmimeaService._
 
-  val providerName: String = "BC"
-  val daneType: String = "65500"
-  //this correlates to a hardcoded private value in BC
-  val algorithmName: String = "SHA1withRSA"
-
-  val digestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(providerName).build
-  val sha224Calculator: DigestCalculator = digestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224))
-  val daneEntryFactory = new DANEEntryFactory(sha224Calculator)
   val daneFetcherFactory: JndiDANEFetcherFactory = new JndiDANEFetcherFactory().usingDNSServer(dnsServer)
-  val daneEntryFetcher: DANEEntryFetcher = new DANEEntryFetcher(daneFetcherFactory, sha224Calculator)
-  val certConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(providerName)
+  val daneEntryFetcher: DANEEntryFetcher = new DANEEntryFetcher(daneFetcherFactory, TruncatingDigestCalculator)
 
-  val toolkit: SMIMEToolkit = new SMIMEToolkit(digestCalculatorProvider)
+  val toolkit: SMIMEToolkit = new SMIMEToolkit(DigestCalculatorProvider)
 
 
   // // // // // // // // // // Dane Methods
@@ -97,7 +82,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
    * Gets certificate data from DANEEntry and converts it to a X509Certificate
    */
   def getCertFromDANEEntry(daneEntry: DANEEntry): X509Certificate = {
-    certConverter.getCertificate(daneEntry.getCertificate)
+    CertificateConverter.getCertificate(daneEntry.getCertificate)
   }
 
 
@@ -107,17 +92,17 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
    * No relation between the email and cert is checked.
    */
   def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
-    daneEntryFactory.createEntry(email, validateCert(cert.getEncoded))
+    DaneEntryFactory.createEntry(email, validateCert(cert.getEncoded))
   }
 
 
   /**
-   * Creates a DANEEntry from an email and a cert. 
+   * Creates a DANEEntry from an email and a cert.
    * The cert must be valid (signed and not expired).
    * No relation between the email and cert is checked.
    */
   def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
-    daneEntryFactory.createEntry(email, validateCert(certBytes))
+    DaneEntryFactory.createEntry(email, validateCert(certBytes))
   }
 
 
@@ -127,7 +112,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
   def getDnsZoneLineForDaneEntry(de: DANEEntry): String = {
     val encoded: Array[Byte] = de.getRDATA
     val hex: String = Hex.toHexString(encoded).toUpperCase
-    s"${de.getDomainName}. 299 IN TYPE$daneType \\# ${encoded.length} ${hex}"
+    s"${de.getDomainName}. IN TYPE$DaneType \\# ${encoded.length} ${hex}"
   }
 
 
@@ -147,7 +132,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
    */
   def sign(email: Email, fromIdentity: JcaPKIXIdentity): Email = {
 
-    val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(providerName).build(algorithmName, fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
+    val signerInfo: SignerInfoGenerator = new JcaSimpleSignerInfoGeneratorBuilder().setProvider(Provider).build(AlgorithmName, fromIdentity.getPrivateKey, fromIdentity.getX509Certificate)
     val signedMultipart: MimeMultipart = toolkit.sign(email.bodyPart, signerInfo)
 
     Email(email.from, email.to, email.subject, signedMultipart)
@@ -161,8 +146,8 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
     if (toUserCert == null)
       throw new Exception("no cert for encryption")
 
-    val encryptor: OutputEncryptor = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes128_CBC).setProvider(providerName).build
-    val infoGenerator: JceKeyTransRecipientInfoGenerator = new JceKeyTransRecipientInfoGenerator(toUserCert).setProvider(providerName)
+    val encryptor: OutputEncryptor = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes128_CBC).setProvider(Provider).build
+    val infoGenerator: JceKeyTransRecipientInfoGenerator = new JceKeyTransRecipientInfoGenerator(toUserCert).setProvider(Provider)
 
     val encrypted: MimeBodyPart = toolkit.encrypt(email.multipart, encryptor, infoGenerator)
 
@@ -199,7 +184,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
           case is => new MimeBodyPart(is.asInstanceOf[InputStream])
         }
         val recipientId = getRecipientId(toIdentity)
-        val decrypted: MimeBodyPart = toolkit.decrypt(part, recipientId, new JceKeyTransEnvelopedRecipient(toIdentity.getPrivateKey).setProvider(providerName))
+        val decrypted: MimeBodyPart = toolkit.decrypt(part, recipientId, new JceKeyTransEnvelopedRecipient(toIdentity.getPrivateKey).setProvider(Provider))
         if (decrypted.isMimeType("multipart/signed"))
           decrypted.getContent
         else
@@ -227,7 +212,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
         val smimeSigned: SMIMESigned = new SMIMESigned(mm)
         val signerInformation: SignerInformation = smimeSigned.getSignerInfos.getSigners.iterator.next
         val certHolder: X509CertificateHolder = toolkit.extractCertificate(mm, signerInformation)
-        val isSignatureValid: Boolean = toolkit.isValidSignature(mm, new JcaSimpleSignerInfoVerifierBuilder().setProvider(providerName).build(certHolder))
+        val isSignatureValid: Boolean = toolkit.isValidSignature(mm, new JcaSimpleSignerInfoVerifierBuilder().setProvider(Provider).build(certHolder))
 
         val certMatchesTheirCert: Boolean = certMatchesReference(certHolder, fromCert)
         val certPathValid: Boolean = false //validateCertPath(certHolder)
@@ -238,7 +223,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
         val smimeSigned = new SMIMESigned(p)
         val signerInformation: SignerInformation = smimeSigned.getSignerInfos.getSigners.iterator.next
         val certHolder: X509CertificateHolder = toolkit.extractCertificate(p, signerInformation)
-        val isSignatureValid: Boolean = toolkit.isValidSignature(p, new JcaSimpleSignerInfoVerifierBuilder().setProvider(providerName).build(certHolder))
+        val isSignatureValid: Boolean = toolkit.isValidSignature(p, new JcaSimpleSignerInfoVerifierBuilder().setProvider(Provider).build(certHolder))
 
         val certMatchesTheirCert: Boolean = certMatchesReference(certHolder, fromCert)
         val certPathValid: Boolean = false //validateCertPath(certHolder)
@@ -279,7 +264,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
 
 
   /**
-   * Checks the holder for 
+   * Checks the holder for
    * @param certBytes
    */
   def validateCert(certBytes: Array[Byte]): X509CertificateHolder = {
@@ -331,6 +316,27 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
     //
     //return false
   }
+}
+
+object DaneSmimeaService {
+  // this corresponds to a hardcoded private value in BC
+  val AlgorithmName: String = "SHA1withRSA"
+
+  val Provider = new BouncyCastleProvider
+  Security.addProvider(Provider)
+
+  val DaneType: String = "53"
+
+  val CertificateConverter: JcaX509CertificateConverter = new JcaX509CertificateConverter().setProvider(Provider)
+
+  val DigestCalculatorProvider: DigestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(Provider).build
+  val TruncatingDigestCalculator = {
+    // Sample usage: https://github.com/bcgit/bc-java/blob/master/pkix/src/test/java/org/bouncycastle/cert/test/DANETest.java
+    val sha256DigestCalculator = DigestCalculatorProvider.get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256))
+    new TruncatingDigestCalculator(sha256DigestCalculator)
+  }
+
+  val DaneEntryFactory = new DANEEntryFactory(TruncatingDigestCalculator)
 }
 
 
@@ -402,15 +408,6 @@ class DecryptionException(message: String) extends Exception(message)
  */
 class BadCertificateException(message: String) extends Exception(message)
 
-
-/**
- * Singleton to add BouncyCastleProvider to java Security exactly once.
- */
-object BouncyCastleProviderSetup {
-  Security.addProvider(new BouncyCastleProvider)
-
-  def init() = {} //noop - this method provides a descriptive way to ensure this singleton is initialized/touched
-}
 
 
 /**

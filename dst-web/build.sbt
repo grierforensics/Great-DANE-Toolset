@@ -10,9 +10,6 @@ artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
   artifact.name + "-" + module.revision + "." + artifact.extension
 }
 
-//jetty()
-tomcat()
-
 resolvers += Resolver.sonatypeRepo("releases")
 
 libraryDependencies ++= Seq(
@@ -21,11 +18,11 @@ libraryDependencies ++= Seq(
   "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14"
 )
 
-libraryDependencies ++= Seq( // test
+libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "9.1.0.v20131115" % "test",
   "org.eclipse.jetty" % "jetty-plus" % "9.1.0.v20131115" % "test",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 )
 
-webInfClasses in webapp := true
+enablePlugins(TomcatPlugin)

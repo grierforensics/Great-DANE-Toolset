@@ -23,7 +23,7 @@ class EmailSender(val smtpHost: String, val username: String, val password: Stri
       props.put("mail.smtp.ssl.trust", "*")
     }
 
-    val authenticator: Authenticator {def getPasswordAuthentication: PasswordAuthentication} = new Authenticator() {
+    val authenticator: Authenticator = new Authenticator() {
       override def getPasswordAuthentication: PasswordAuthentication = {
         new PasswordAuthentication(username, password)
       }
