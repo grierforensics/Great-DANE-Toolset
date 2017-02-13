@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Grier Forensics. All Rights Reserved.
 package com.grierforensics.danesmimeatoolset.model
 
 import java.security.cert.X509Certificate

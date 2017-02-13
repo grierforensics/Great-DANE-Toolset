@@ -1,3 +1,4 @@
+// Copyright (C) 2016 Grier Forensics. All Rights Reserved.
 package com.grierforensics.danesmimeatoolset.rest
 
 import javax.ws.rs.InternalServerErrorException

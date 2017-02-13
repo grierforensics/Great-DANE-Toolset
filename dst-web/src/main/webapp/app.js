@@ -1,3 +1,4 @@
+// Copyright (C) 2016 Grier Forensics. All Rights Reserved.
 var app = angular.module('app', [
     'ngRoute'
 ]);

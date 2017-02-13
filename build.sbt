@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Grier Forensics. All Rights Reserved.
 
 name := "dst"
 
