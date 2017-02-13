@@ -179,10 +179,10 @@ class Workflow(@BeanProperty val id: String,
     }
 
     Email(context.dstAddress, new InternetAddress(emailAddress),
-      s"DANE SMIMEA Toolset Mail Test ($id)",
+      s"Great DANE Toolset Mail Test ($id)",
       s"""Hello,
 
-         This is a test email sent by the DANE SMIMEA Toolset.
+         This is a test email sent by the Great DANE Toolset.
 
          At this point, we can tell you:
          - $certDescriptionForEmail
