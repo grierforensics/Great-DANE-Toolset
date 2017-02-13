@@ -2,9 +2,9 @@ name := "dst-core"
 
 organization := "com.grierforensics"
 
-version := "0.8"
+version := "1.0"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
   "org.bouncycastle" % "bcprov-jdk15on" % "1.56",

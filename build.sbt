@@ -3,9 +3,9 @@ name := "dst"
 
 organization := "com.grierforensics"
 
-version := "0.8"
+version := "1.0"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.8"
 
 resolvers += Resolver.sonatypeRepo("releases")
 

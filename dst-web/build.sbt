@@ -2,9 +2,9 @@ name := "dst-web"
 
 organization := "com.grierforensics"
 
-version := "0.8"
+version := "1.0"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.8"
 
 artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
   artifact.name + "-" + module.revision + "." + artifact.extension
