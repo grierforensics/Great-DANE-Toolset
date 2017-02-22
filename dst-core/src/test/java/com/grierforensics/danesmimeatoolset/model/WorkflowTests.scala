@@ -13,7 +13,7 @@ class WorkflowTests extends FunSuite with BeforeAndAfterAll {
   val message = EmailSender.createMessage(Email(new InternetAddress("a@b.c"), new InternetAddress("x@y.z"), "subject", "body"))
 
   test("happy path") {
-    val w1 = Workflow("dst.bob@example.com")
+    val w1 = new Workflow("dst.bob@example.com")
     w1.sendEmail()
     assert(w1.events.size == 3)
 

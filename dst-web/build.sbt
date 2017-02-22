@@ -15,7 +15,7 @@ artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
 resolvers += Resolver.sonatypeRepo("releases")
 
 libraryDependencies ++= Seq(
-  "com.grierforensics" %% "dst-core" % "0.8",
+  "com.grierforensics" %% "dst-core" % "1.0",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "org.glassfish.jersey.containers" % "jersey-container-servlet-core" % "2.14"
 )

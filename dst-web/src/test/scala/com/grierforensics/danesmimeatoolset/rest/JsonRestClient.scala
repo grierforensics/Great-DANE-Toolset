@@ -5,12 +5,15 @@ import java.io.InputStream
 import java.lang.reflect.Type
 import java.net.URLEncoder
 import javax.ws.rs._
-import javax.ws.rs.client.Entity
+import javax.ws.rs.client.{Client, ClientBuilder, Entity}
 import javax.ws.rs.core.Response.Status.Family
 import javax.ws.rs.core.{Form, GenericType, MediaType, Response}
 
 import com.grierforensics.danesmimeatoolset.service.GensonConfig
 import com.owlike.genson
+import com.owlike.genson.ext.jaxrs.GensonJsonConverter
+import org.glassfish.jersey.client.ClientConfig
+import org.glassfish.jersey.model.ContractProvider
 
 import scala.io.{Codec, Source}
 
@@ -21,10 +24,11 @@ import scala.io.{Codec, Source}
  * by App.newClient (this is somewhat hard coded for now, and should be replaced by some passed in ClientConfig)
  */
 trait JsonRestClient {
+  import JsonRestClient._
 
   //get
   def getResponse[T](url: String): Response = {
-    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).get()
+    client.target(url).request(MediaType.APPLICATION_JSON_TYPE).get()
   }
 
   def get[T](url: String): String = handleResponse(getResponse(url))
@@ -38,7 +42,7 @@ trait JsonRestClient {
 
   def postToResponse[T](url: String, any: Any): Response = {
     val entity: Entity[Any] = Entity.entity(any, MediaType.APPLICATION_JSON)
-    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
+    client.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
   }
 
   def post[T](url: String, any: Any): String = handleResponse(postToResponse(url, any))
@@ -51,7 +55,7 @@ trait JsonRestClient {
                        requestMediaType: String = MediaType.TEXT_PLAIN,
                        responseMediaType: String = MediaType.TEXT_PLAIN): String = {
     val entity: Entity[Any] = Entity.entity(any, requestMediaType)
-    val response: Response = WebClient().target(url).request(responseMediaType).post(entity)
+    val response: Response = client.target(url).request(responseMediaType).post(entity)
 
     if (response.getStatusInfo.getFamily != Family.SUCCESSFUL)
       throwForResponse(response)
@@ -70,7 +74,7 @@ trait JsonRestClient {
       form.param(k, v)
     val entity: Entity[Form] = Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE)
 
-    WebClient().target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
+    client.target(url).request(MediaType.APPLICATION_JSON_TYPE).post(entity)
   }
 
   def postForm[T](url: String, params: Map[String, String]): String =
@@ -136,4 +140,21 @@ trait JsonRestClient {
     override def getRawClass: Class[T] = gt.getRawType.asInstanceOf[Class[T]]
   }
 
+}
+
+/** Factory object for clientConfig's suitable for making requests to WebService.
+  *
+  * Both WebClient and WebService have the same JSON serialization settings.
+  *
+  * Example usage:
+  * {{{
+  *   client.target(url).request(MediaType.APPLICATION_JSON_TYPE).get().readEntity(classOf[SomeClass])
+  * }}}
+  * */
+object JsonRestClient {
+  private val client: Client = {
+    val clientConfig = new ClientConfig().register(
+      new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
+    ClientBuilder.newClient(clientConfig)
+  }
 }

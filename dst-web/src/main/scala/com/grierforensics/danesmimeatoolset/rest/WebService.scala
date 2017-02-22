@@ -37,8 +37,8 @@ class WebService extends ResourceConfig with LazyLogging {
 
   register(new GensonJsonConverter(new GensonCustomResolver), ContractProvider.NO_PRIORITY)
   register(new CatchAllExceptionMapper, ContractProvider.NO_PRIORITY)
-  register(classOf[WorkflowResource])
-  register(classOf[ToolsetResource])
+  register(new WorkflowResource, ContractProvider.NO_PRIORITY)
+  register(new ToolsetResource, ContractProvider.NO_PRIORITY)
 
   val context = Context
   context.fetcherStart()
@@ -63,5 +63,5 @@ class CatchAllExceptionMapper extends ExceptionMapper[Exception] with LazyLoggin
 /** Provides Genson instance for JSON handling in Jersey */
 @Provider
 class GensonCustomResolver extends ContextResolver[Genson] {
-  override def getContext(`type`: Class[_]): Genson = genson
+  override def getContext(cls: Class[_]): Genson = genson
 }

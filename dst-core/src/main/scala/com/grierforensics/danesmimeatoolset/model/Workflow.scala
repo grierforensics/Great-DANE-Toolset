@@ -8,9 +8,9 @@ import javax.mail.internet.InternetAddress
 import com.grierforensics.danesmimeatoolset.model.EventType._
 import com.grierforensics.danesmimeatoolset.service._
 import com.grierforensics.danesmimeatoolset.util.IdGenerator
+import com.owlike.genson.annotation.{JsonIgnore, JsonProperty}
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.beans.BeanProperty
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -21,15 +21,17 @@ import scala.concurrent.Future
  *
  * State is tracked with a mutable list of events.
  */
-class Workflow(@BeanProperty val id: String,
-               @BeanProperty val emailAddress: String,
-               var cert: Option[X509Certificate] = None,
-               @BeanProperty var events: ListBuffer[Event] = ListBuffer()) extends LazyLogging {
+case class Workflow(id: String, emailAddress: String) extends LazyLogging {
+  def this(emailAddress: String) = this(IdGenerator.nextId, emailAddress)
 
-  val context = Context
+  @JsonIgnore var cert: Option[X509Certificate] = None
+  @JsonProperty var certData: String = ""
 
-  @BeanProperty val replyToAddress: String = context.dstAddress.getAddress
-  @BeanProperty val replyCert: String = context.dstCertBase64Str
+  @JsonProperty var events: ListBuffer[Event] = ListBuffer()
+
+  @JsonIgnore val context = Context
+  @JsonProperty val replyToAddress: String = context.dstAddress.getAddress
+  @JsonProperty val replyCert: String = context.dstCertBase64Str
 
 
   /**
@@ -48,14 +50,14 @@ class Workflow(@BeanProperty val id: String,
         setWaiting("Sending email ...")
         val encryptedEmail: Email = context.daneSmimeaService.encrypt(signedEmail, c)
         context.sender.send(encryptedEmail)
-        events += new Event(success, "Sent encrypted email.")
+        events += new BasicEvent(success, "Sent encrypted email.")
         context.sender.send(signedEmail)
-        events += new Event(success, "Sent signed email as backup.")
+        events += new BasicEvent(success, "Sent signed email as backup.")
       }
       case None => {
         setWaiting("Sending email ...")
         context.sender.send(signedEmail)
-        events += new Event(success, "Sent signed email.")
+        events += new BasicEvent(success, "Sent signed email.")
       }
     }
 
@@ -74,7 +76,7 @@ class Workflow(@BeanProperty val id: String,
       }
       catch {
         case e: EmailSendFailedException => {
-          events += new Event(error, "Trouble sending email.")
+          events += new BasicEvent(error, "Trouble sending email.")
           logger.error("Unable to send email", e)
         }
       }
@@ -86,7 +88,7 @@ class Workflow(@BeanProperty val id: String,
    * Records that the user indicates a bad signature;
    */
   def clickedReceivedSignedBad(): Unit = {
-    events += new Event(EventType.error, "Clicked: Bad Signature")
+    events += new BasicEvent(EventType.error, "Clicked: Bad Signature")
     dropWaiting()
   }
 
@@ -95,13 +97,13 @@ class Workflow(@BeanProperty val id: String,
    * Records that the user indicates a good signature;
    */
   def clickedReceivedSignedOk(): Unit = {
-    events += new Event(EventType.success, "Clicked: Good Signature")
+    events += new BasicEvent(EventType.success, "Clicked: Good Signature")
     dropWaiting()
   }
 
 
   /**
-   * Checks for new DANE SMIMEA certificate, updates workflow if there is a new certificate, and adds an Event marking
+   * Checks for new DANE SMIMEA certificate, updates workflow if there is a new certificate, and adds an BasicEvent marking
    * to display what was found.
    */
   def updateCert(): Option[X509Certificate] = {
@@ -110,22 +112,28 @@ class Workflow(@BeanProperty val id: String,
     val fetched: Option[X509Certificate] = context.daneSmimeaService.fetchDaneCert(emailAddress)
     fetched match {
       case Some(f) if cert.isEmpty => {
-        events += new Event(validCert, "Found cert :" + f) //todo: create cert event with proper message
+        events += new BasicEvent(validCert, "Found cert :" + f) //todo: create cert event with proper message
         cert = fetched
       }
       case Some(f) if cert.isDefined && f != cert.get => {
-        events += new Event(validCert, "Found updated cert " + f) //todo: create cert event with proper message
+        events += new BasicEvent(validCert, "Found updated cert " + f) //todo: create cert event with proper message
         cert = fetched
       }
       case None if cert.isDefined => {
-        events += new Event(invalidCert, "DANE Cert is missing.  Using previously loaded cert " + cert.get)
+        events += new BasicEvent(invalidCert, "DANE Cert is missing.  Using previously loaded cert " + cert.get)
       }
       case None if cert.isEmpty => {
-        events += new Event(invalidCert, "DANE Cert is not found.")
+        events += new BasicEvent(invalidCert, "DANE Cert is not found.")
       }
       case _ => {}
     }
     dropWaiting()
+
+    // Update the String representation for JSON serialization
+    certData = cert match {
+      case Some(c) => c.toString
+      case None => ""
+    }
 
     logger.info(s"Updated cert: id=$id found=${fetched.isDefined} ")
     cert
@@ -153,7 +161,7 @@ class Workflow(@BeanProperty val id: String,
     if (dropOldWaiting)
       dropWaiting()
 
-    events += new Event(waiting, message)
+    events += new BasicEvent(waiting, message)
   }
 
 
@@ -167,7 +175,7 @@ class Workflow(@BeanProperty val id: String,
 
   private def createEmail: Email = {
     val certDataAddendum = cert match {
-      case Some(s) => "Certificate data:\n" + getCertData
+      case Some(s) => "Certificate data:\n" + certData
       case None => ""
     }
 
@@ -191,7 +199,7 @@ class Workflow(@BeanProperty val id: String,
          ! Please reply to this email to complete the test !
 
          Then click here to followup and see the result:
-            ${context.clickHost}/page/workflow/$id
+            ${context.clickHost}/#/workflow/$id
 
 
          Also, you may click the following links to indicate if this email signature is valid or not.
@@ -206,45 +214,15 @@ class Workflow(@BeanProperty val id: String,
 
 
          Certificate data:
-         ${getCertData}}
+         $certData}
      """.stripMargin
     )
-  }
-
-
-  /**
-   * JavaBean getter for a cert description - for JSON output.
-   */
-  def getCertData: String = cert match {
-    case Some(c) => c.toString
-    case None => ""
-  }
-
-
-  def canEqual(other: Any): Boolean = other.isInstanceOf[Workflow]
-
-  override def equals(other: Any): Boolean = other match {
-    case that: Workflow =>
-      (that canEqual this) &&
-        id == that.id &&
-        emailAddress == that.emailAddress &&
-        events == that.events
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(id, emailAddress, events)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
 
 
 /** Factory object. */
 object Workflow {
-  def apply(email: String) = {
-    new Workflow(IdGenerator.nextId, email)
-  }
-
   def parseIdInSubject(subject: String): Option[String] = {
     val idInSubjectPattern = """\((\d*)\)""".r
     idInSubjectPattern.findFirstMatchIn(subject) match {
@@ -253,9 +231,3 @@ object Workflow {
     }
   }
 }
-
-
-
-
-
-

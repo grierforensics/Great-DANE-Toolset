@@ -19,7 +19,7 @@ class JsonTests extends FunSuite with BeforeAndAfterAll {
   }
 
   test("json serialization") {
-    val w1 = Workflow("dst.bob@example.com")
+    val w1 = new Workflow("dst.bob@example.com")
     w1.updateCert()
     w1.handleMessage(message)
 

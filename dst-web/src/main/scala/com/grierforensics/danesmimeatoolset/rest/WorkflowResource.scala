@@ -6,8 +6,8 @@ import javax.ws.rs._
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.{MediaType, Response}
 
-import com.grierforensics.danesmimeatoolset.model.{ClickType, Workflow}
-import com.grierforensics.danesmimeatoolset.service.Context
+import com.grierforensics.danesmimeatoolset.model.{ClickType, Event, Workflow}
+import com.grierforensics.danesmimeatoolset.service.{Context, GensonConfig}
 
 import scala.beans.BeanProperty
 
@@ -18,29 +18,44 @@ class WorkflowResource {
   val emailPattern: String = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"
   val context = Context
 
+  private def getWorkflow(id: String): Workflow =
+    context.workflowDao.fetch(id).getOrElse(
+      throw new WebApplicationException("Workflow id not found:" + id, Status.NOT_FOUND)
+    )
+
+  /** Issues with GensonScala serializing the Workflow class have led to this
+    *
+    * @param workflow Workflow
+    * @return JSON-serialized workflow
+    */
+  private def serializeWorkflow(workflow: Workflow): String = {
+    case class Foo(id: String, email: String, certData: String, events: Seq[Event], replyTo: String, replyCert: String)
+    val foo = Foo(workflow.id, workflow.emailAddress, workflow.certData,
+      workflow.events, workflow.replyToAddress, workflow.replyCert)
+    GensonConfig.genson.serialize(foo)
+  }
+
   /** Creates and returns a new workflow as JSON. */
   @POST
   @Consumes(Array(MediaType.APPLICATION_JSON))
-  def createWorkflow(email: String): Workflow = {
+  def createWorkflow(email: String): String = {
     if (!email.matches(emailPattern))
       throw new WebApplicationException("Bad email:" + email, Status.INTERNAL_SERVER_ERROR)
 
-    val result: Workflow = Workflow(email)
-    context.workflowDao.persist(result)
+    val workflow: Workflow = new Workflow(email)
+    context.workflowDao.persist(workflow)
 
-    result.sendEmailAsync()
+    workflow.sendEmailAsync()
 
-    result
+    serializeWorkflow(workflow)
   }
 
 
   /** Returns a workflow as JSON. */
   @GET
   @Path("{id}")
-  def getWorkflow(@PathParam("id") id: String): Workflow = {
-    val w: Option[Workflow] = context.workflowDao.fetch(id)
-    w.getOrElse(
-      throw new WebApplicationException("Workflow id not found:" + id, Status.NOT_FOUND))
+  def retrieveWorkflow(@PathParam("id") id: String): String = {
+    serializeWorkflow(getWorkflow(id))
   }
 
 
@@ -50,19 +65,20 @@ class WorkflowResource {
     * */
   @GET
   @Path("{id}/click/{clickType}")
-  def click(@PathParam("id") id: String, @PathParam("clickType") token: ClickType, @QueryParam("uiRedirect") uiRedirect: Boolean): Workflow = {
-    val w: Workflow = getWorkflow(id)
+  def click(@PathParam("id") id: String, @PathParam("clickType") token: ClickType, @QueryParam("uiRedirect") uiRedirect: Boolean): String = {
+    val workflow: Workflow = getWorkflow(id)
 
     token match {
-      case ClickType.receivedSignedOk => w.clickedReceivedSignedOk()
-      case ClickType.receivedSignedBad => w.clickedReceivedSignedBad()
+      case ClickType.receivedSignedOk => workflow.clickedReceivedSignedOk()
+      case ClickType.receivedSignedBad => workflow.clickedReceivedSignedBad()
       case t => throw new WebApplicationException("Unknown token " + t, Status.NOT_FOUND)
     }
 
     if (uiRedirect) {
       throw new WebApplicationException(Response.seeOther(new URI("/#/workflow/" + id)).build());
     }
-    w
+
+    serializeWorkflow(workflow)
   }
 
 
