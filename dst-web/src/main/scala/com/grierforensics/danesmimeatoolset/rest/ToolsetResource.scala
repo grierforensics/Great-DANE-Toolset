@@ -1,6 +1,7 @@
 // Copyright (C) 2016 Grier Forensics. All Rights Reserved.
 package com.grierforensics.danesmimeatoolset.rest
 
+import java.security.cert.X509Certificate
 import javax.ws.rs._
 import javax.ws.rs.core.{MediaType, Response}
 
@@ -84,9 +85,10 @@ class ToolsetResource {
   @POST
   @Path("{email}/dnsZoneLineForCert")
   @Consumes(Array(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN))
-  def createDnsZoneLineAsText(@PathParam("email") email: String, certHex: String): String = {
+  def createDnsZoneLineAsText(@PathParam("email") email: String, certPem: String): String = {
     try {
-      val de2: DANEEntry = daneSmimeaService.createDANEEntry(email, Hex.decode(certHex))
+      val cert: X509Certificate = daneSmimeaService.fromPem(certPem)
+      val de2: DANEEntry = daneSmimeaService.createDANEEntry(email, cert)
       val result = daneSmimeaService.getDnsZoneLineForDaneEntry(de2)
       GensonConfig.genson.serialize(result)
     }

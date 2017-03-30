@@ -3,11 +3,11 @@ app.controller('CreateDaneCtrl', function ($scope, $http) {
     $scope.reset = function () {
         $scope.result = null;
         $scope.email = null;
-        $scope.certHex = null;
+        $scope.certPem = null;
     };
 
     $scope.createDane = function () {
-        $http.post('/toolset/' + encodeURI($scope.email) + '/dnsZoneLineForCert', $scope.certHex)
+        $http.post('/toolset/' + encodeURI($scope.email) + '/dnsZoneLineForCert', $scope.certPem)
             .success(function (data) {
                 $scope.result = data;
             })

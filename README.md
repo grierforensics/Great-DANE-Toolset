@@ -16,9 +16,6 @@ The project components are:
 
 The build is done with Simple Build Tool (SBT).
 
-This is a multi-project build, so some sbt commands will be to sub projects and will be prefixed with the
-module name: `web\SOMETASK`.
-
 The web portion of the project is based on the main Webapp plugin.  This gives a handful of webapp related build
 tasks such as preparing a webapp directory without creating a war `web\webapp:prepare`, running a web container
 locally, or deploying to a cloud webapp container.  See: https://github.com/earldouglas/xsbt-web-plugin.
@@ -35,14 +32,11 @@ Core jar will be found at `./dst/dst-core/target/scala-2.11/dst-core_2.11-x.x.ja
 
 ### Run locally
 
-`$ sbt`
-`> web/container:start`
-
-This will build the
+`$ sbt tomcat:start tomcat:join`
 
 ### Build a webapp directory without war packaging
 
-`$ web/webapp:prepare`
+`$ sbt webappPrepare`
 
 ## Configuration
 

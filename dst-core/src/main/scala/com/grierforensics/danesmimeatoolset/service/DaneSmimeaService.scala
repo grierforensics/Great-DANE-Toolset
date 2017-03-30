@@ -20,6 +20,7 @@ import org.bouncycastle.cms.jcajce._
 import org.bouncycastle.cms.{KeyTransRecipientId, RecipientId, SignerInfoGenerator, SignerInformation}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.mail.smime.{SMIMESigned, SMIMEToolkit}
+import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.operator._
 import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
@@ -93,7 +94,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
    * No relation between the email and cert is checked.
    */
   def createDANEEntry(email: String, cert: X509Certificate): DANEEntry = {
-    DaneEntryFactory.createEntry(email, validateCert(cert.getEncoded))
+    createDANEEntry(email, cert.getEncoded)
   }
 
 
@@ -103,7 +104,7 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
    * No relation between the email and cert is checked.
    */
   def createDANEEntry(email: String, certBytes: Array[Byte]): DANEEntry = {
-    DaneEntryFactory.createEntry(email, validateCert(certBytes))
+    DaneEntryFactory.createEntry(email, new X509CertificateHolder(certBytes))
   }
 
 
@@ -316,6 +317,21 @@ class DaneSmimeaService(val dnsServer: String) extends LazyLogging {
     //}
     //
     //return false
+  }
+
+  /** Decode a PEM-encoded certificate into an X.509 Certificate object */
+  def fromPem(encoded: String): X509Certificate = {
+    import java.io.StringReader
+
+    val parser = new PEMParser(new StringReader(encoded))
+    val obj = parser.readObject()
+
+    obj match {
+      case holder: X509CertificateHolder => CertificateConverter.getCertificate(holder)
+      // TODO: support public keys, warn/error for private keys
+      // See https://gist.github.com/akorobov/6910564 for examples
+      case _ => throw new BadCertificateException("Invalid PEM-encoded certificate.")
+    }
   }
 }
 
